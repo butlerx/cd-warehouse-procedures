@@ -1,0 +1,13 @@
+{
+  "databases": {
+    "dojos": "cp-dojos-development",
+    "users": "cp-users-development",
+    "events": "cp-events-development",
+    "dw": "cd_datawarehouse"
+  },
+  "config": {
+      "user": "postgres",
+      "password": "",
+      "host": "localhost"
+  }
+}
