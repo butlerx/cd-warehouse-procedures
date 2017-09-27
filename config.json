@@ -4,28 +4,28 @@
       "db": "cp-dojos-development",
       "host": "db",
       "users": "platform",
-      "password": ""
+      "password": "QdYx3D5y"
     },
     "users": {
       "db": "cp-users-development",
       "host": "db",
       "users": "platform",
-      "password": ""
+      "password": "QdYx3D5y"
     },
     "events": {
       "db": "cp-events-development",
       "host": "db",
       "users": "platform",
-      "password": ""
+      "password": "QdYx3D5y"
     },
     "dw": {
       "db": "cd_datawarehouse",
       "user": "postgres",
-      "password": "",
-      "host": "localhost"
+      "password": "QdYx3D5y",
+      "host": "db"
     }
   },
-  "aws": {
-    "bucket": "backups"
+  "s3": {
+    "bucket": "zen-pg-backups"
   }
 }

@@ -1,0 +1,20 @@
+version: '3'
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=platform
+      - POSTGRES_PASSWORD=QdYx3D5y
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    environment:
+      - AWS_ACCCESS=
+      - AWS_SECRET=
+
+volumes:
+  pg-data:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import json
+import os
 import shlex
 import uuid
 from subprocess import PIPE, Popen
@@ -8,7 +9,7 @@ from subprocess import PIPE, Popen
 import botocore
 import psycopg2
 import psycopg2.extras
-from boto3 import resource
+from boto3 import Session
 from isodate import parse_datetime
 
 with open('./config.json') as data:
@@ -19,6 +20,8 @@ users = data['databases']['users']
 events = data['databases']['events']
 dw = data['databases']['dw']
 aws = data['s3']
+aws_access_key = os.environ.get('AWS_ACCESS')
+aws_secret_key = os.environ.get('AWS_SECRET')
 dojos_cursor = None
 dojos_conn = None
 users_cursor = None
@@ -35,7 +38,7 @@ def main():
     download('dojo')
     restore_db(dojos.host, dojos.db, dojos.user, dojos.password,
                './db/dojos.tar.gz')
-    print "Connecting to database\n    ->%s" % (dojos.db)
+    print("Connecting to database\n    ->%s" % (dojos.db))
     dojos_conn = psycopg2.connect(
         dbname=dojos.db,
         host=dojos.host,
@@ -48,7 +51,7 @@ def main():
     download('events')
     restore_db(events.host, events.db, events.user, events.password,
                './db/events.tar.gz')
-    print "Connecting to database\n    ->%s" % (events.db)
+    print("Connecting to database\n    ->%s" % (events.db))
     events_conn = psycopg2.connect(
         dbname=events.db,
         host=events.host,
@@ -62,7 +65,7 @@ def main():
     download('users')
     restore_db(users.host, users.db, users.user, users.password,
                './db/users.tar.gz')
-    print "Connecting to database\n    ->%s" % (users.db)
+    print("Connecting to database\n    ->%s" % (users.db))
     users_conn = psycopg2.connect(
         dbname=users.db,
         host=users.host,
@@ -70,7 +73,7 @@ def main():
         password=users.password)
     users_cursor = users_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    print "Connecting to database\n    ->%s" % (dw.db)
+    print("Connecting to database\n    ->%s" % (dw.db))
     setup_warehouse()
     global dw_conn
     global dw_cursor
@@ -79,16 +82,17 @@ def main():
     # use cursor with queries
     dw_cursor = dw_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    print "Connected to all databases!\nMigrating Data"
+    print("Connected to all databases!\nMigrating Data")
     migrate_db()
 
 
 def get_last_modified(obj):
+    print(obj)
     return int(obj['LastModified'].strftime('%s'))
 
 
 def setup_warehouse():
-    print "setting up Data Warehouse"
+    print("setting up Data Warehouse")
     dw_setup = psycopg2.connect(
         dbname='postgres', host=dw.host, user=dw.user, password=dw.password)
     cursor = dw_setup.cursor()
@@ -101,9 +105,11 @@ def setup_warehouse():
 
 
 def download(db):
-    s3 = resource('s3')
-    bucket = s3.Bucket(aws.bucket)
-    backups = bucket.objects.filter(db)
+    session = Session(
+        aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
+    s3 = session.resource('s3')
+    bucket = s3.Bucket(aws['bucket'])
+    backups = bucket.objects.filter(Prefix=db)
     sBackups = sorted(backups, key=get_last_modified)
     try:
         bucket.download_file(sBackups[0], './db/' + db + '.tar.gz')
