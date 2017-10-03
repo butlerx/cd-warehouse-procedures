@@ -26,6 +26,6 @@
     }
   },
   "s3": {
-    "bucket": "zen-pg-backups"
+    "bucket": "zen-pg-backup"
   }
 }
