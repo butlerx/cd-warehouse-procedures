@@ -36,49 +36,52 @@ def main():
     global dojos_cursor
     global dojos_conn
     download('dojo')
-    restore_db(dojos.host, dojos.db, dojos.user, dojos.password,
+    restore_db(dojos['host'], dojos['db'], dojos['user'], dojos['password'],
                './db/dojos.tar.gz')
-    print("Connecting to database\n    ->%s" % (dojos.db))
+    print("Connecting to database\n    ->%s" % (dojos['db']))
     dojos_conn = psycopg2.connect(
-        dbname=dojos.db,
-        host=dojos.host,
-        user=dojos.user,
-        password=dojos.password)
+        dbname=dojos['db'],
+        host=dojos['host'],
+        user=dojos['user'],
+        password=dojos['password'])
     dojos_cursor = dojos_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     global events_conn
     global events_cursor
     download('events')
-    restore_db(events.host, events.db, events.user, events.password,
-               './db/events.tar.gz')
-    print("Connecting to database\n    ->%s" % (events.db))
+    restore_db(events['host'], events['db'], events['user'],
+               events['password'], './db/events.tar.gz')
+    print("Connecting to database\n    ->%s" % (events['db']))
     events_conn = psycopg2.connect(
-        dbname=events.db,
-        host=events.host,
-        user=events.user,
-        password=events.password)
+        dbname=events['db'],
+        host=events['host'],
+        user=events['user'],
+        password=events['password'])
     events_cursor = events_conn.cursor(
         cursor_factory=psycopg2.extras.DictCursor)
 
     global users_conn
     global users_cursor
     download('users')
-    restore_db(users.host, users.db, users.user, users.password,
+    restore_db(users['host'], users['db'], users['user'], users['password'],
                './db/users.tar.gz')
-    print("Connecting to database\n    ->%s" % (users.db))
+    print("Connecting to database\n    ->%s" % (users['db']))
     users_conn = psycopg2.connect(
-        dbname=users.db,
-        host=users.host,
-        user=users.user,
-        password=users.password)
+        dbname=users['db'],
+        host=users['host'],
+        user=users['user'],
+        password=users['password'])
     users_cursor = users_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    print("Connecting to database\n    ->%s" % (dw.db))
+    print("Connecting to database\n    ->%s" % (dw['db']))
     setup_warehouse()
     global dw_conn
     global dw_cursor
     dw_conn = psycopg2.connect(
-        dbname=dw.db, host=dw.host, user=dw.user, password=dw.password)
+        dbname=dw['db'],
+        host=dw['host'],
+        user=dw['user'],
+        password=dw['password'])
     # use cursor with queries
     dw_cursor = dw_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
@@ -94,10 +97,13 @@ def get_last_modified(obj):
 def setup_warehouse():
     print("setting up Data Warehouse")
     dw_setup = psycopg2.connect(
-        dbname='postgres', host=dw.host, user=dw.user, password=dw.password)
+        dbname='postgres',
+        host=dw['host'],
+        user=dw['user'],
+        password=dw['password'])
     cursor = dw_setup.cursor()
     try:
-        cursor.execute('DROP DATABASE IF EXISTS {0}'.format(dw.db))
+        cursor.execute('DROP DATABASE IF EXISTS {0}'.format(dw['db']))
         cursor.execute(open("./sql/dw.sql", "r").read())
         cursor.commit()
     except (psycopg2.Error) as e:
@@ -109,10 +115,13 @@ def download(db):
         aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
     s3 = session.resource('s3')
     bucket = s3.Bucket(aws['bucket'])
-    backups = bucket.objects.filter(Prefix=db)
-    sBackups = sorted(backups, key=get_last_modified)
+    sBackups = bucket.objects.filter(Prefix='zen' + db)
     try:
-        bucket.download_file(sBackups[0], './db/' + db + '.tar.gz')
+        print("why does python hate me")
+        for obj in sBackups:
+            print(obj.key)
+            bucket.download_file(obj.key, '/db/' + db + '.tar.gz')
+            break
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
             print("The object does not exist.")
@@ -124,8 +133,7 @@ def restore_db(host, database, user, password, path):
     command = 'pg_restore -h {0} -d {1} -U {2} {3}'.format(
         host, database, user, path)
     command = shlex.split(command)
-    p = Popen(command, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    return p.communicate('{}\n'.format(password))
+    return Popen(command, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
 
 
 def migrate_db():

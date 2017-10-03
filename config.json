@@ -3,19 +3,19 @@
     "dojos": {
       "db": "cp-dojos-development",
       "host": "db",
-      "users": "platform",
+      "user": "platform",
       "password": "QdYx3D5y"
     },
     "users": {
       "db": "cp-users-development",
       "host": "db",
-      "users": "platform",
+      "user": "platform",
       "password": "QdYx3D5y"
     },
     "events": {
       "db": "cp-events-development",
       "host": "db",
-      "users": "platform",
+      "user": "platform",
       "password": "QdYx3D5y"
     },
     "dw": {
