@@ -20,7 +20,7 @@
     },
     "dw": {
       "db": "cd_datawarehouse",
-      "user": "postgres",
+      "user": "platform",
       "password": "QdYx3D5y",
       "host": "db"
     }

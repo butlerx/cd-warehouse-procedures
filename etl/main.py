@@ -4,7 +4,8 @@ import json
 import os
 import shlex
 import uuid
-from subprocess import PIPE, Popen
+from shutil import rmtree
+from subprocess import STDOUT, Popen
 
 import botocore
 import psycopg2
@@ -35,9 +36,9 @@ dw_conn = None
 def main():
     global dojos_cursor
     global dojos_conn
-    download('dojo')
+    download('dojos')
     restore_db(dojos['host'], dojos['db'], dojos['user'], dojos['password'],
-               './db/dojos.tar.gz')
+               '/db/dojos.tar.gz')
     print("Connecting to database\n    ->%s" % (dojos['db']))
     dojos_conn = psycopg2.connect(
         dbname=dojos['db'],
@@ -50,7 +51,7 @@ def main():
     global events_cursor
     download('events')
     restore_db(events['host'], events['db'], events['user'],
-               events['password'], './db/events.tar.gz')
+               events['password'], '/db/events.tar.gz')
     print("Connecting to database\n    ->%s" % (events['db']))
     events_conn = psycopg2.connect(
         dbname=events['db'],
@@ -64,7 +65,7 @@ def main():
     global users_cursor
     download('users')
     restore_db(users['host'], users['db'], users['user'], users['password'],
-               './db/users.tar.gz')
+               '/db/users.tar.gz')
     print("Connecting to database\n    ->%s" % (users['db']))
     users_conn = psycopg2.connect(
         dbname=users['db'],
@@ -89,11 +90,6 @@ def main():
     migrate_db()
 
 
-def get_last_modified(obj):
-    print(obj)
-    return int(obj['LastModified'].strftime('%s'))
-
-
 def setup_warehouse():
     print("setting up Data Warehouse")
     dw_setup = psycopg2.connect(
@@ -101,11 +97,17 @@ def setup_warehouse():
         host=dw['host'],
         user=dw['user'],
         password=dw['password'])
+    dw_setup.set_session(autocommit=True)
     cursor = dw_setup.cursor()
     try:
         cursor.execute('DROP DATABASE IF EXISTS {0}'.format(dw['db']))
-        cursor.execute(open("./sql/dw.sql", "r").read())
-        cursor.commit()
+        cursor.execute('CREATE DATABASE "{0}"'.format(dw['db']))
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(users['db']))
+        cursor.execute('CREATE DATABASE "{0}"'.format(users['db']))
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(dojos['db']))
+        cursor.execute('CREATE DATABASE "{0}"'.format(dojos['db']))
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(events['db']))
+        cursor.execute('CREATE DATABASE "{0}"'.format(events['db']))
     except (psycopg2.Error) as e:
         print(e)
 
@@ -117,9 +119,7 @@ def download(db):
     bucket = s3.Bucket(aws['bucket'])
     sBackups = bucket.objects.filter(Prefix='zen' + db)
     try:
-        print("why does python hate me")
         for obj in sBackups:
-            print(obj.key)
             bucket.download_file(obj.key, '/db/' + db + '.tar.gz')
             break
     except botocore.exceptions.ClientError as e:
@@ -130,13 +130,28 @@ def download(db):
 
 
 def restore_db(host, database, user, password, path):
-    command = 'pg_restore -h {0} -d {1} -U {2} {3}'.format(
-        host, database, user, path)
-    command = shlex.split(command)
-    return Popen(command, shell=False, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    tar = Popen(
+        shlex.split('tar xvf {0} -C /db'.format(path)),
+        shell=False,
+        stderr=STDOUT)
+    my_env = os.environ.copy()
+    my_env["PATH"] = "/usr/sbin:/sbin:" + my_env["PATH"]
+    tar.wait()
+    pg = Popen(
+        shlex.split(
+            'pg_restore -c --if-exists -h {0} -d {1} -U {2} /db/backup_dump'.
+            format(host, database, user)),
+        shell=False,
+        stderr=STDOUT,
+        env=my_env)
+    pg.wait()
+    rmtree('/db/backup_dump')
 
 
 def migrate_db():
+    dw_conn.set_session(autocommit=True)
+    dw_cursor.execute(open("./sql/dw.sql", "r").read())
+    dw_conn.set_session(autocommit=False)
     # Truncate all tables before fresh insert from sources
     dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')
     dw_cursor.execute('TRUNCATE TABLE "dimDojos" CASCADE')
@@ -230,7 +245,7 @@ def migrate_db():
         INNER JOIN "public"."dimLocation" ON
         "zen-source"."staging".location_id = "public"."dimLocation".location_id
         INNER JOIN "public"."dimBadges"
-        ON "zen-source"."staging".badge_id = "public"."dimBadges".badge_id'
+        ON "zen-source"."staging".badge_id = "public"."dimBadges".badge_id
     ''')
     for row in dw_cursor.fetchall():
         measures(row)

@@ -1,5 +1,5 @@
 --
--- PostgreSQL database dump
+-- PostgresQL database dump
 --
 
 -- Dumped from database version 9.6.1
@@ -15,13 +15,13 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: zen-source; Type: SCHEMA; Schema: -; Owner: postgres
+-- Name: zen-source; Type: SCHEMA; Schema: -; Owner: platform
 --
 
 CREATE SCHEMA "zen-source";
 
 
-ALTER SCHEMA "zen-source" OWNER TO postgres;
+ALTER SCHEMA "zen-source" OWNER TO platform;
 
 --
 -- Name: plpgsql; Type: EXTENSION; Schema: -; Owner:
@@ -43,7 +43,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: dimBadges; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dimBadges; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE "dimBadges" (
@@ -56,10 +56,10 @@ CREATE TABLE "dimBadges" (
 );
 
 
-ALTER TABLE "dimBadges" OWNER TO postgres;
+ALTER TABLE "dimBadges" OWNER TO platform;
 
 --
--- Name: dimDojos; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dimDojos; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE "dimDojos" (
@@ -79,10 +79,10 @@ CREATE TABLE "dimDojos" (
 );
 
 
-ALTER TABLE "dimDojos" OWNER TO postgres;
+ALTER TABLE "dimDojos" OWNER TO platform;
 
 --
--- Name: dimEvents; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dimEvents; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE "dimEvents" (
@@ -98,10 +98,10 @@ CREATE TABLE "dimEvents" (
 );
 
 
-ALTER TABLE "dimEvents" OWNER TO postgres;
+ALTER TABLE "dimEvents" OWNER TO platform;
 
 --
--- Name: dimLocation; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dimLocation; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE "dimLocation" (
@@ -111,10 +111,10 @@ CREATE TABLE "dimLocation" (
 );
 
 
-ALTER TABLE "dimLocation" OWNER TO postgres;
+ALTER TABLE "dimLocation" OWNER TO platform;
 
 --
--- Name: dimTickets; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dimTickets; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE "dimTickets" (
@@ -125,10 +125,10 @@ CREATE TABLE "dimTickets" (
 );
 
 
-ALTER TABLE "dimTickets" OWNER TO postgres;
+ALTER TABLE "dimTickets" OWNER TO platform;
 
 --
--- Name: dimTime; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dimTime; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE "dimTime" (
@@ -139,10 +139,10 @@ CREATE TABLE "dimTime" (
 );
 
 
-ALTER TABLE "dimTime" OWNER TO postgres;
+ALTER TABLE "dimTime" OWNER TO platform;
 
 --
--- Name: dimUsers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: dimUsers; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE "dimUsers" (
@@ -159,10 +159,10 @@ CREATE TABLE "dimUsers" (
 );
 
 
-ALTER TABLE "dimUsers" OWNER TO postgres;
+ALTER TABLE "dimUsers" OWNER TO platform;
 
 --
--- Name: factUsers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: factUsers; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE "factUsers" (
@@ -177,12 +177,12 @@ CREATE TABLE "factUsers" (
 );
 
 
-ALTER TABLE "factUsers" OWNER TO postgres;
+ALTER TABLE "factUsers" OWNER TO platform;
 
 SET search_path = "zen-source", pg_catalog;
 
 --
--- Name: staging; Type: TABLE; Schema: zen-source; Owner: postgres
+-- Name: staging; Type: TABLE; Schema: zen-source; Owner: platform
 --
 
 CREATE TABLE staging (
@@ -198,88 +198,86 @@ CREATE TABLE staging (
 );
 
 
-ALTER TABLE staging OWNER TO postgres;
+ALTER TABLE staging OWNER TO platform;
 
 SET search_path = public, pg_catalog;
 
 --
--- Data for Name: dimBadges; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: dimBadges; Type: TABLE DATA; Schema: public; Owner: platform
 --
 
-COPY "dimBadges" (badge_id, type, archived, name, id, user_id) FROM stdin;
-\.
-
+-- COPY "dimBadges" (badge_id, type, archived, name, id, user_id) FROM stdin;
 
 --
--- Data for Name: dimDojos; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: dimDojos; Type: TABLE DATA; Schema: public; Owner: platform
 --
 
-COPY "dimDojos" (id, created, stage, country, city, state, continent, tao_verified, expected_attendees, verified, deleted, verified_at, county) FROM stdin;
-\.
+-- COPY "dimDojos" (id, created, stage, country, city, state, continent, tao_verified, expected_attendees, verified, deleted, verified_at, county) FROM stdin;
+-- \.
 
 
 --
--- Data for Name: dimEvents; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: dimEvents; Type: TABLE DATA; Schema: public; Owner: platform
 --
 
-COPY "dimEvents" (event_id, recurring_type, country, city, created_at, type, dojo_id, public, status) FROM stdin;
-\.
-
-
---
--- Data for Name: dimLocation; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY "dimLocation" (country, city, location_id) FROM stdin;
-\.
+-- COPY "dimEvents" (event_id, recurring_type, country, city, created_at, type, dojo_id, public, status) FROM stdin;
+-- \.
 
 
 --
--- Data for Name: dimTickets; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: dimLocation; Type: TABLE DATA; Schema: public; Owner: platform
 --
 
-COPY "dimTickets" (ticket_id, type, quantity, deleted) FROM stdin;
-\.
-
-
---
--- Data for Name: dimTime; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY "dimTime" (year, month, day, time_id) FROM stdin;
-\.
+-- COPY "dimLocation" (country, city, location_id) FROM stdin;
+-- \.
 
 
 --
--- Data for Name: dimUsers; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: dimTickets; Type: TABLE DATA; Schema: public; Owner: platform
 --
 
-COPY "dimUsers" (dob, country, city, gender, user_type, roles, continent, user_id, mailing_list, age) FROM stdin;
-\.
+-- COPY "dimTickets" (ticket_id, type, quantity, deleted) FROM stdin;
+-- \.
 
 
 --
--- Data for Name: factUsers; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: dimTime; Type: TABLE DATA; Schema: public; Owner: platform
 --
 
-COPY "factUsers" (dojo_id, badge_id, event_id, ticket_id, user_id, time_id, location_id, id) FROM stdin;
-\.
+-- COPY "dimTime" (year, month, day, time_id) FROM stdin;
+-- \.
+
+
+--
+-- Data for Name: dimUsers; Type: TABLE DATA; Schema: public; Owner: platform
+--
+
+-- COPY "dimUsers" (dob, country, city, gender, user_type, roles, continent, user_id, mailing_list, age) FROM stdin;
+-- \.
+
+
+--
+-- Data for Name: factUsers; Type: TABLE DATA; Schema: public; Owner: platform
+--
+
+-- COPY "factUsers" (dojo_id, badge_id, event_id, ticket_id, user_id, time_id, location_id, id) FROM stdin;
+-- \.
 
 
 SET search_path = "zen-source", pg_catalog;
 
 --
--- Data for Name: staging; Type: TABLE DATA; Schema: zen-source; Owner: postgres
+-- Data for Name: staging; Type: TABLE DATA; Schema: zen-source; Owner: platform
 --
 
-COPY staging (user_id, dojo_id, event_id, session_id, ticket_id, id, time_id, location_id, badge_id) FROM stdin;
-\.
+-- COPY staging (user_id, dojo_id, event_id, session_id, ticket_id, id, time_id, location_id, badge_id) FROM stdin;
+-- \.
 
 
 SET search_path = public, pg_catalog;
 
 --
--- Name: dimDojos PK_dimDojos; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dimDojos PK_dimDojos; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "dimDojos"
@@ -287,7 +285,7 @@ ALTER TABLE ONLY "dimDojos"
 
 
 --
--- Name: dimBadges dimBadges_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dimBadges dimBadges_pkey; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "dimBadges"
@@ -295,7 +293,7 @@ ALTER TABLE ONLY "dimBadges"
 
 
 --
--- Name: dimEvents dimEvents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dimEvents dimEvents_pkey; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "dimEvents"
@@ -303,7 +301,7 @@ ALTER TABLE ONLY "dimEvents"
 
 
 --
--- Name: dimLocation dimLocation_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dimLocation dimLocation_pkey; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "dimLocation"
@@ -311,7 +309,7 @@ ALTER TABLE ONLY "dimLocation"
 
 
 --
--- Name: dimTickets dimTickets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dimTickets dimTickets_pkey; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "dimTickets"
@@ -319,7 +317,7 @@ ALTER TABLE ONLY "dimTickets"
 
 
 --
--- Name: dimTime dimTime_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dimTime dimTime_pkey; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "dimTime"
@@ -327,7 +325,7 @@ ALTER TABLE ONLY "dimTime"
 
 
 --
--- Name: dimUsers dimUsers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: dimUsers dimUsers_pkey; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "dimUsers"
@@ -335,7 +333,7 @@ ALTER TABLE ONLY "dimUsers"
 
 
 --
--- Name: factUsers factUsers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: factUsers factUsers_pkey; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "factUsers"
@@ -345,7 +343,7 @@ ALTER TABLE ONLY "factUsers"
 SET search_path = "zen-source", pg_catalog;
 
 --
--- Name: staging PK_staging; Type: CONSTRAINT; Schema: zen-source; Owner: postgres
+-- Name: staging PK_staging; Type: CONSTRAINT; Schema: zen-source; Owner: platform
 --
 
 ALTER TABLE ONLY staging
@@ -355,56 +353,56 @@ ALTER TABLE ONLY staging
 SET search_path = public, pg_catalog;
 
 --
--- Name: FKI_factUsers_dimBadges; Type: INDEX; Schema: public; Owner: postgres
+-- Name: FKI_factUsers_dimBadges; Type: INDEX; Schema: public; Owner: platform
 --
 
 CREATE INDEX "FKI_factUsers_dimBadges" ON "factUsers" USING btree (badge_id);
 
 
 --
--- Name: FKI_factUsers_dimDojos; Type: INDEX; Schema: public; Owner: postgres
+-- Name: FKI_factUsers_dimDojos; Type: INDEX; Schema: public; Owner: platform
 --
 
 CREATE INDEX "FKI_factUsers_dimDojos" ON "factUsers" USING btree (dojo_id);
 
 
 --
--- Name: FKI_factUsers_dimEvents; Type: INDEX; Schema: public; Owner: postgres
+-- Name: FKI_factUsers_dimEvents; Type: INDEX; Schema: public; Owner: platform
 --
 
 CREATE INDEX "FKI_factUsers_dimEvents" ON "factUsers" USING btree (event_id);
 
 
 --
--- Name: FKI_factUsers_dimLocation; Type: INDEX; Schema: public; Owner: postgres
+-- Name: FKI_factUsers_dimLocation; Type: INDEX; Schema: public; Owner: platform
 --
 
 CREATE INDEX "FKI_factUsers_dimLocation" ON "factUsers" USING btree (location_id);
 
 
 --
--- Name: FKI_factUsers_dimTickets; Type: INDEX; Schema: public; Owner: postgres
+-- Name: FKI_factUsers_dimTickets; Type: INDEX; Schema: public; Owner: platform
 --
 
 CREATE INDEX "FKI_factUsers_dimTickets" ON "factUsers" USING btree (ticket_id);
 
 
 --
--- Name: FKI_factUsers_dimTime; Type: INDEX; Schema: public; Owner: postgres
+-- Name: FKI_factUsers_dimTime; Type: INDEX; Schema: public; Owner: platform
 --
 
 CREATE INDEX "FKI_factUsers_dimTime" ON "factUsers" USING btree (time_id);
 
 
 --
--- Name: FKI_factUsers_dimUsers; Type: INDEX; Schema: public; Owner: postgres
+-- Name: FKI_factUsers_dimUsers; Type: INDEX; Schema: public; Owner: platform
 --
 
 CREATE INDEX "FKI_factUsers_dimUsers" ON "factUsers" USING btree (user_id);
 
 
 --
--- Name: factUsers FK_factUsers_dimBadges; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: factUsers FK_factUsers_dimBadges; Type: FK CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "factUsers"
@@ -412,7 +410,7 @@ ALTER TABLE ONLY "factUsers"
 
 
 --
--- Name: factUsers FK_factUsers_dimDojos; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: factUsers FK_factUsers_dimDojos; Type: FK CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "factUsers"
@@ -420,7 +418,7 @@ ALTER TABLE ONLY "factUsers"
 
 
 --
--- Name: factUsers FK_factUsers_dimEvents; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: factUsers FK_factUsers_dimEvents; Type: FK CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "factUsers"
@@ -428,7 +426,7 @@ ALTER TABLE ONLY "factUsers"
 
 
 --
--- Name: factUsers FK_factUsers_dimLocation; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: factUsers FK_factUsers_dimLocation; Type: FK CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "factUsers"
@@ -436,7 +434,7 @@ ALTER TABLE ONLY "factUsers"
 
 
 --
--- Name: factUsers FK_factUsers_dimTickets; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: factUsers FK_factUsers_dimTickets; Type: FK CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "factUsers"
@@ -444,7 +442,7 @@ ALTER TABLE ONLY "factUsers"
 
 
 --
--- Name: factUsers FK_factUsers_dimTime; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: factUsers FK_factUsers_dimTime; Type: FK CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "factUsers"
@@ -452,7 +450,7 @@ ALTER TABLE ONLY "factUsers"
 
 
 --
--- Name: factUsers FK_factUsers_dimUsers; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: factUsers FK_factUsers_dimUsers; Type: FK CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY "factUsers"
