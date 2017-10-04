@@ -25,8 +25,8 @@ aws = data['s3']
 aws_access_key = os.environ.get('AWS_ACCESS')
 aws_secret_key = os.environ.get('AWS_SECRET')
 db_password = os.environ.get('PGPASSWORD')
-db_user = os.environ.get('DB_USER')
-db_host = os.environ.get('DB_HOST')
+db_user = os.environ.get('PGUSER')
+db_host = os.environ.get('PGHOST')
 dojos_cursor = None
 dojos_conn = None
 users_cursor = None
@@ -77,6 +77,7 @@ def main():
 
     print("Connected to all databases!\nMigrating Data")
     migrate_db()
+    clean_databases()
     sys.exit(0)
 
 
@@ -87,14 +88,28 @@ def reset_databases():
     dw_setup.set_session(autocommit=True)
     cursor = dw_setup.cursor()
     try:
-        cursor.execute('DROP DATABASE IF EXISTS {0}'.format(dw))
-        cursor.execute('CREATE DATABASE "{0}"'.format(dw))
         cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(users))
-        cursor.execute('CREATE DATABASE "{0}"'.format(users))
         cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(dojos))
-        cursor.execute('CREATE DATABASE "{0}"'.format(dojos))
         cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(events))
+        cursor.execute('DROP DATABASE IF EXISTS {0}'.format(dw))
+        cursor.execute('CREATE DATABASE "{0}"'.format(users))
+        cursor.execute('CREATE DATABASE "{0}"'.format(dojos))
         cursor.execute('CREATE DATABASE "{0}"'.format(events))
+        cursor.execute('CREATE DATABASE "{0}"'.format(dw))
+    except (psycopg2.Error) as e:
+        print(e)
+
+
+def clean_databases():
+    print("Cleaning up Data Warehouse")
+    dw_setup = psycopg2.connect(
+        dbname='postgres', host=db_host, user=db_user, password=db_password)
+    dw_setup.set_session(autocommit=True)
+    cursor = dw_setup.cursor()
+    try:
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(users))
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(dojos))
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(events))
     except (psycopg2.Error) as e:
         print(e)
 

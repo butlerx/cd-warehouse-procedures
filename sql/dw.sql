@@ -207,6 +207,7 @@ SET search_path = public, pg_catalog;
 --
 
 -- COPY "dimBadges" (badge_id, type, archived, name, id, user_id) FROM stdin;
+-- \.
 
 --
 -- Data for Name: dimDojos; Type: TABLE DATA; Schema: public; Owner: platform
