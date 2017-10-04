@@ -34,6 +34,7 @@ dw_conn = None
 
 
 def main():
+    reset_databases()
     global dojos_cursor
     global dojos_conn
     download('dojos')
@@ -75,7 +76,6 @@ def main():
     users_cursor = users_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     print("Connecting to database\n    ->%s" % (dw['db']))
-    setup_warehouse()
     global dw_conn
     global dw_cursor
     dw_conn = psycopg2.connect(
@@ -90,7 +90,7 @@ def main():
     migrate_db()
 
 
-def setup_warehouse():
+def reset_databases():
     print("setting up Data Warehouse")
     dw_setup = psycopg2.connect(
         dbname='postgres',
@@ -790,7 +790,7 @@ def measures(row):
             location_id,
             id,
             badge_id
-        ) VALUES ( % s, % s, % s, % s, % s, % s, % s, % s)
+        ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s)
     '''
     data = (dojo_id, ticket_id, event_id, user_id, time_id, location_id, id,
             badge_id)
