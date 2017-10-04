@@ -1,29 +1,9 @@
 {
   "databases": {
-    "dojos": {
-      "db": "cp-dojos-development",
-      "host": "db",
-      "user": "platform",
-      "password": "QdYx3D5y"
-    },
-    "users": {
-      "db": "cp-users-development",
-      "host": "db",
-      "user": "platform",
-      "password": "QdYx3D5y"
-    },
-    "events": {
-      "db": "cp-events-development",
-      "host": "db",
-      "user": "platform",
-      "password": "QdYx3D5y"
-    },
-    "dw": {
-      "db": "cd_datawarehouse",
-      "user": "platform",
-      "password": "QdYx3D5y",
-      "host": "db"
-    }
+    "dojos": "cp-dojos-development",
+    "users": "cp-users-development",
+    "events": "cp-events-development",
+    "dw": "cd_datawarehouse"
   },
   "s3": {
     "bucket": "zen-pg-backup"

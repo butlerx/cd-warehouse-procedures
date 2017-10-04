@@ -13,8 +13,11 @@ services:
     depends_on:
       - db
     environment:
-      - AWS_ACCCESS=
+      - AWS_ACCESS=
       - AWS_SECRET=
+      - PGPASSWORD=QdYx3D5y
+      - PGUSER=platform
+      - PGHOST=db
 
 volumes:
   pg-data:

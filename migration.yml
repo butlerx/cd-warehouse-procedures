@@ -1,0 +1,56 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: warehouse-migration
+spec:
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      name: warehouse-migration
+    spec:
+      imagePullSecrets:
+        - name: regsecret
+      containers:
+        - name: migration
+          image: coderdojo/cd-warehouse-procedures
+          env:
+            - name: PGPASSWORD
+              value: QdYx3D5y
+            - name: PGUSER
+              value: platform
+            - name: PGHOST
+              value: db
+            - name: AWS_ACCESS
+              value:
+            - name: AWS_SECRET
+              value: 
+      restartPolicy: OnFailure
+---
+apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+  name: warehouse-migration
+spec:
+  schedule: "0 1 1 * * "
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+            - name: regsecret
+          containers:
+            - name: migration
+              image: coderdojo/cd-warehouse-procedures
+              env:
+                - name: PGPASSWORD
+                  value: QdYx3D5y
+                - name: PGUSER
+                  value: platform
+                - name: PGHOST
+                  value: db
+                - name: AWS_ACCESS
+                  value:
+                - name: AWS_SECRET
+                  value:
+          restartPolicy: OnFailure

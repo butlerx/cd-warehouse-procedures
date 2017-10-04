@@ -3,6 +3,7 @@
 import json
 import os
 import shlex
+import sys
 import uuid
 from shutil import rmtree
 from subprocess import STDOUT, Popen
@@ -23,6 +24,9 @@ dw = data['databases']['dw']
 aws = data['s3']
 aws_access_key = os.environ.get('AWS_ACCESS')
 aws_secret_key = os.environ.get('AWS_SECRET')
+db_password = os.environ.get('PGPASSWORD')
+db_user = os.environ.get('DB_USER')
+db_host = os.environ.get('DB_HOST')
 dojos_cursor = None
 dojos_conn = None
 users_cursor = None
@@ -38,76 +42,59 @@ def main():
     global dojos_cursor
     global dojos_conn
     download('dojos')
-    restore_db(dojos['host'], dojos['db'], dojos['user'], dojos['password'],
-               '/db/dojos.tar.gz')
-    print("Connecting to database\n    ->%s" % (dojos['db']))
+    restore_db(db_host, dojos, db_user, db_password, '/db/dojos.tar.gz')
+    print("Connecting to database\n    ->%s" % (dojos))
     dojos_conn = psycopg2.connect(
-        dbname=dojos['db'],
-        host=dojos['host'],
-        user=dojos['user'],
-        password=dojos['password'])
+        dbname=dojos, host=db_host, user=db_user, password=db_password)
     dojos_cursor = dojos_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     global events_conn
     global events_cursor
     download('events')
-    restore_db(events['host'], events['db'], events['user'],
-               events['password'], '/db/events.tar.gz')
-    print("Connecting to database\n    ->%s" % (events['db']))
+    restore_db(db_host, events, db_user, db_password, '/db/events.tar.gz')
+    print("Connecting to database\n    ->%s" % (events))
     events_conn = psycopg2.connect(
-        dbname=events['db'],
-        host=events['host'],
-        user=events['user'],
-        password=events['password'])
+        dbname=events, host=db_host, user=db_user, password=db_password)
     events_cursor = events_conn.cursor(
         cursor_factory=psycopg2.extras.DictCursor)
 
     global users_conn
     global users_cursor
     download('users')
-    restore_db(users['host'], users['db'], users['user'], users['password'],
-               '/db/users.tar.gz')
-    print("Connecting to database\n    ->%s" % (users['db']))
+    restore_db(db_host, users, db_user, db_password, '/db/users.tar.gz')
+    print("Connecting to database\n    ->%s" % (users))
     users_conn = psycopg2.connect(
-        dbname=users['db'],
-        host=users['host'],
-        user=users['user'],
-        password=users['password'])
+        dbname=users, host=db_host, user=db_user, password=db_password)
     users_cursor = users_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    print("Connecting to database\n    ->%s" % (dw['db']))
+    print("Connecting to database\n    ->%s" % (dw))
     global dw_conn
     global dw_cursor
     dw_conn = psycopg2.connect(
-        dbname=dw['db'],
-        host=dw['host'],
-        user=dw['user'],
-        password=dw['password'])
+        dbname=dw, host=db_host, user=db_user, password=db_password)
     # use cursor with queries
     dw_cursor = dw_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     print("Connected to all databases!\nMigrating Data")
     migrate_db()
+    sys.exit(0)
 
 
 def reset_databases():
     print("setting up Data Warehouse")
     dw_setup = psycopg2.connect(
-        dbname='postgres',
-        host=dw['host'],
-        user=dw['user'],
-        password=dw['password'])
+        dbname='postgres', host=db_host, user=db_user, password=db_password)
     dw_setup.set_session(autocommit=True)
     cursor = dw_setup.cursor()
     try:
-        cursor.execute('DROP DATABASE IF EXISTS {0}'.format(dw['db']))
-        cursor.execute('CREATE DATABASE "{0}"'.format(dw['db']))
-        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(users['db']))
-        cursor.execute('CREATE DATABASE "{0}"'.format(users['db']))
-        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(dojos['db']))
-        cursor.execute('CREATE DATABASE "{0}"'.format(dojos['db']))
-        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(events['db']))
-        cursor.execute('CREATE DATABASE "{0}"'.format(events['db']))
+        cursor.execute('DROP DATABASE IF EXISTS {0}'.format(dw))
+        cursor.execute('CREATE DATABASE "{0}"'.format(dw))
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(users))
+        cursor.execute('CREATE DATABASE "{0}"'.format(users))
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(dojos))
+        cursor.execute('CREATE DATABASE "{0}"'.format(dojos))
+        cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(events))
+        cursor.execute('CREATE DATABASE "{0}"'.format(events))
     except (psycopg2.Error) as e:
         print(e)
 
