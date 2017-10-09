@@ -206,10 +206,10 @@ def migrate_db():
 
         # Queries - Badges
         users_cursor.execute('''
-            SELECT user_id, to_json(badges)
-            AS badges
-            FROM cd_profiles
-            WHERE badges IS NOT null AND json_array_length(to_json(badges)) >= 1
+        SELECT user_id, to_json(badges)
+        AS badges
+        FROM cd_profiles
+        WHERE badges IS NOT null AND json_array_length(to_json(badges)) >= 1
         ''')
         for row in users_cursor.fetchall():
             transformBadges(row)
@@ -217,12 +217,12 @@ def migrate_db():
 
         # Queries - Staging
         events_cursor.execute('''
-            SELECT cd_applications.id, cd_applications.ticket_id,
-                cd_applications.session_id, cd_applications.event_id,
-                cd_applications.dojo_id, cd_applications.user_id,
-                dates, country, city
-            FROM cd_applications
-            INNER JOIN cd_events ON cd_applications.event_id = cd_events.id
+        SELECT cd_applications.id, cd_applications.ticket_id,
+            cd_applications.session_id, cd_applications.event_id,
+            cd_applications.dojo_id, cd_applications.user_id,
+            dates, country, city
+        FROM cd_applications
+        INNER JOIN cd_events ON cd_applications.event_id = cd_events.id
         ''')
         for row in events_cursor:
             staging(row)
@@ -235,27 +235,28 @@ def migrate_db():
 
         # Queries - Measures
         dw_cursor.execute('''
-            SELECT staging.dojo_id, staging.ticket_id, staging.session_id,
-                staging.event_id, staging.user_id, staging.time_id,
-                staging.location_id, staging.badge_id
-            FROM "zen-source"."staging"
-            INNER JOIN "public"."dimDojos"
-            ON "zen-source"."staging".dojo_id = "public"."dimDojos".id
-            INNER JOIN "public"."dimEvents"
-            ON "zen-source"."staging".event_id = "public"."dimEvents".event_id
-            INNER JOIN "public"."dimUsers"
-            ON "zen-source"."staging".user_id = "public"."dimUsers".user_id
-            INNER JOIN "public"."dimTime"
-            ON "zen-source"."staging".time_id = "public"."dimTime".time_id
-            INNER JOIN "public"."dimLocation" ON
-            "zen-source"."staging".location_id = "public"."dimLocation".location_id
-            INNER JOIN "public"."dimBadges"
-            ON "zen-source"."staging".badge_id = "public"."dimBadges".badge_id
+        SELECT staging.dojo_id, staging.ticket_id, staging.session_id,
+            staging.event_id, staging.user_id, staging.time_id,
+            staging.location_id, staging.badge_id
+        FROM "zen-source"."staging"
+        INNER JOIN "public"."dimDojos"
+        ON "zen-source"."staging".dojo_id = "public"."dimDojos".id
+        INNER JOIN "public"."dimEvents"
+        ON "zen-source"."staging".event_id = "public"."dimEvents".event_id
+        INNER JOIN "public"."dimUsers"
+        ON "zen-source"."staging".user_id = "public"."dimUsers".user_id
+        INNER JOIN "public"."dimTime"
+        ON "zen-source"."staging".time_id = "public"."dimTime".time_id
+        INNER JOIN "public"."dimLocation" ON
+        "zen-source"."staging".location_id = "public"."dimLocation".location_id
+        INNER JOIN "public"."dimBadges"
+        ON "zen-source"."staging".badge_id = "public"."dimBadges".badge_id
         ''')
         for row in dw_cursor.fetchall():
             measures(row)
         print("Inserted measures")
-    except:
+    except (psycopg2.Error) as e:
+        print(e)
         pass
 
 
