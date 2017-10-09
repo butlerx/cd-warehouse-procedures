@@ -98,6 +98,7 @@ def reset_databases():
         cursor.execute('CREATE DATABASE "{0}"'.format(dw))
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def clean_databases():
@@ -112,6 +113,7 @@ def clean_databases():
         cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(events))
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def download(db):
@@ -151,107 +153,110 @@ def restore_db(host, database, user, password, path):
 
 
 def migrate_db():
-    dw_conn.set_session(autocommit=True)
-    dw_cursor.execute(open("./sql/dw.sql", "r").read())
-    dw_conn.set_session(autocommit=False)
-    # Truncate all tables before fresh insert from sources
-    dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')
-    dw_cursor.execute('TRUNCATE TABLE "dimDojos" CASCADE')
-    dw_cursor.execute('TRUNCATE TABLE "dimUsers" CASCADE')
-    dw_cursor.execute('TRUNCATE TABLE "dimEvents" CASCADE')
-    dw_cursor.execute('TRUNCATE TABLE "dimLocation" CASCADE')
-    dw_cursor.execute('TRUNCATE TABLE "dimTime" CASCADE')
-    dw_cursor.execute('TRUNCATE TABLE "dimTickets" CASCADE')
-    dw_cursor.execute('TRUNCATE TABLE "zen-source"."staging" CASCADE')
-    dw_cursor.execute('TRUNCATE TABLE "dimBadges" CASCADE')
+    try:
+        dw_conn.set_session(autocommit=True)
+        dw_cursor.execute(open("./sql/dw.sql", "r").read())
+        dw_conn.set_session(autocommit=False)
+        # Truncate all tables before fresh insert from sources
+        dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimDojos" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimUsers" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimEvents" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimLocation" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimTime" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimTickets" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "zen-source"."staging" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimBadges" CASCADE')
 
-    # Queries - Dojos
-    dojos_cursor.execute('''
-        SELECT *
-        FROM cd_dojos
-        WHERE verified = 1 and deleted = 0 and stage != 4
-    ''')
-    for row in dojos_cursor:
-        transformDojo(row)
-    print("Inserted all dojos")
+        # Queries - Dojos
+        dojos_cursor.execute('''
+            SELECT *
+            FROM cd_dojos
+            WHERE verified = 1 and deleted = 0 and stage != 4
+        ''')
+        for row in dojos_cursor:
+            transformDojo(row)
+        print("Inserted all dojos")
 
-    # Queries - Events
-    events_cursor.execute('SELECT * FROM cd_events')
-    for row in events_cursor:
-        transformEvent(row)
-    print("Inserted all events and locations")
+        # Queries - Events
+        events_cursor.execute('SELECT * FROM cd_events')
+        for row in events_cursor:
+            transformEvent(row)
+        print("Inserted all events and locations")
 
-    # Queries - Users
-    users_cursor.execute('''
-        SELECT *
-        FROM cd_profiles
-        INNER JOIN sys_user ON cd_profiles.user_id = sys_user.id
-    ''')
-    for row in users_cursor:
-        transformUser(row)
-    print("Inserted all users")
+        # Queries - Users
+        users_cursor.execute('''
+            SELECT *
+            FROM cd_profiles
+            INNER JOIN sys_user ON cd_profiles.user_id = sys_user.id
+        ''')
+        for row in users_cursor:
+            transformUser(row)
+        print("Inserted all users")
 
-    # Queries - Tickets
-    events_cursor.execute('''
-        SELECT status, cd_tickets.id AS ticket_id, type, quantity, deleted
-        FROM cd_sessions
-        INNER JOIN cd_tickets ON cd_sessions.id = cd_tickets.session_id
-    ''')
-    for row in events_cursor:
-        transformTicket(row)
-    print("Inserted all tickets")
+        # Queries - Tickets
+        events_cursor.execute('''
+            SELECT status, cd_tickets.id AS ticket_id, type, quantity, deleted
+            FROM cd_sessions
+            INNER JOIN cd_tickets ON cd_sessions.id = cd_tickets.session_id
+        ''')
+        for row in events_cursor:
+            transformTicket(row)
+        print("Inserted all tickets")
 
-    # Queries - Badges
-    users_cursor.execute('''
-        SELECT user_id, to_json(badges)
-        AS badges
-        FROM cd_profiles
-        WHERE badges IS NOT null AND json_array_length(to_json(badges)) >= 1
-    ''')
-    for row in users_cursor.fetchall():
-        transformBadges(row)
-    print('Inserted badges')
+        # Queries - Badges
+        users_cursor.execute('''
+            SELECT user_id, to_json(badges)
+            AS badges
+            FROM cd_profiles
+            WHERE badges IS NOT null AND json_array_length(to_json(badges)) >= 1
+        ''')
+        for row in users_cursor.fetchall():
+            transformBadges(row)
+        print('Inserted badges')
 
-    # Queries - Staging
-    events_cursor.execute('''
-        SELECT cd_applications.id, cd_applications.ticket_id,
-            cd_applications.session_id, cd_applications.event_id,
-            cd_applications.dojo_id, cd_applications.user_id,
-            dates, country, city
-        FROM cd_applications
-        INNER JOIN cd_events ON cd_applications.event_id = cd_events.id
-    ''')
-    for row in events_cursor:
-        staging(row)
-    print('Populated staging')
+        # Queries - Staging
+        events_cursor.execute('''
+            SELECT cd_applications.id, cd_applications.ticket_id,
+                cd_applications.session_id, cd_applications.event_id,
+                cd_applications.dojo_id, cd_applications.user_id,
+                dates, country, city
+            FROM cd_applications
+            INNER JOIN cd_events ON cd_applications.event_id = cd_events.id
+        ''')
+        for row in events_cursor:
+            staging(row)
+        print('Populated staging')
 
-    dw_cursor.execute('SELECT badge_id, user_id FROM "dimBadges"')
-    for row in dw_cursor.fetchall():
-        addBadge(row)
-    print('Badges added to staging')
+        dw_cursor.execute('SELECT badge_id, user_id FROM "dimBadges"')
+        for row in dw_cursor.fetchall():
+            addBadge(row)
+        print('Badges added to staging')
 
-    # Queries - Measures
-    dw_cursor.execute('''
-        SELECT staging.dojo_id, staging.ticket_id, staging.session_id,
-            staging.event_id, staging.user_id, staging.time_id,
-            staging.location_id, staging.badge_id
-        FROM "zen-source"."staging"
-        INNER JOIN "public"."dimDojos"
-        ON "zen-source"."staging".dojo_id = "public"."dimDojos".id
-        INNER JOIN "public"."dimEvents"
-        ON "zen-source"."staging".event_id = "public"."dimEvents".event_id
-        INNER JOIN "public"."dimUsers"
-        ON "zen-source"."staging".user_id = "public"."dimUsers".user_id
-        INNER JOIN "public"."dimTime"
-        ON "zen-source"."staging".time_id = "public"."dimTime".time_id
-        INNER JOIN "public"."dimLocation" ON
-        "zen-source"."staging".location_id = "public"."dimLocation".location_id
-        INNER JOIN "public"."dimBadges"
-        ON "zen-source"."staging".badge_id = "public"."dimBadges".badge_id
-    ''')
-    for row in dw_cursor.fetchall():
-        measures(row)
-    print("Inserted measures")
+        # Queries - Measures
+        dw_cursor.execute('''
+            SELECT staging.dojo_id, staging.ticket_id, staging.session_id,
+                staging.event_id, staging.user_id, staging.time_id,
+                staging.location_id, staging.badge_id
+            FROM "zen-source"."staging"
+            INNER JOIN "public"."dimDojos"
+            ON "zen-source"."staging".dojo_id = "public"."dimDojos".id
+            INNER JOIN "public"."dimEvents"
+            ON "zen-source"."staging".event_id = "public"."dimEvents".event_id
+            INNER JOIN "public"."dimUsers"
+            ON "zen-source"."staging".user_id = "public"."dimUsers".user_id
+            INNER JOIN "public"."dimTime"
+            ON "zen-source"."staging".time_id = "public"."dimTime".time_id
+            INNER JOIN "public"."dimLocation" ON
+            "zen-source"."staging".location_id = "public"."dimLocation".location_id
+            INNER JOIN "public"."dimBadges"
+            ON "zen-source"."staging".badge_id = "public"."dimBadges".badge_id
+        ''')
+        for row in dw_cursor.fetchall():
+            measures(row)
+        print("Inserted measures")
+    except:
+        pass
 
 
 def transformBadges(row):
@@ -401,6 +406,7 @@ def insertDojo(dojo_id, created_at, verified_at, stage, country, city, county,
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def insertEvent(event_id, recurring_type, country, city, created_at,
@@ -426,6 +432,7 @@ def insertEvent(event_id, recurring_type, country, city, created_at,
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def insertUser(user_id, dob, country, continent, city, gender, user_type,
@@ -450,6 +457,7 @@ def insertUser(user_id, dob, country, continent, city, gender, user_type,
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def insertTickets(ticket_id, ticket_type, quantity, deleted):
@@ -467,6 +475,7 @@ def insertTickets(ticket_id, ticket_type, quantity, deleted):
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def insertLocation(country, city, location_id):
@@ -483,6 +492,7 @@ def insertLocation(country, city, location_id):
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def insertTime(datetime, time_id):
@@ -502,6 +512,7 @@ def insertTime(datetime, time_id):
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def staging(row):
@@ -555,6 +566,7 @@ def staging(row):
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def addBadge(row):
@@ -572,6 +584,7 @@ def addBadge(row):
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def insertBadge(id, archived, type, name, badge_id, user_id):
@@ -591,6 +604,7 @@ def insertBadge(id, archived, type, name, badge_id, user_id):
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 def measures(row):
@@ -801,6 +815,7 @@ def measures(row):
         dw_conn.commit()
     except (psycopg2.Error) as e:
         print(e)
+        pass
 
 
 if __name__ == '__main__':
