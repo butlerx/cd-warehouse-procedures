@@ -92,10 +92,7 @@ def reset_databases():
         cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(dojos))
         cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(events))
         cursor.execute('DROP DATABASE IF EXISTS {0}'.format(dw))
-        cursor.execute('CREATE DATABASE "{0}"'.format(users))
-        cursor.execute('CREATE DATABASE "{0}"'.format(dojos))
-        cursor.execute('CREATE DATABASE "{0}"'.format(events))
-        cursor.execute('CREATE DATABASE "{0}"'.format(dw))
+        cursor.execute('DROP SCHEMA "zen_source" CASCADE')
     except (psycopg2.Error) as e:
         print(e)
         pass
@@ -156,6 +153,10 @@ def migrate_db():
     try:
         dw_conn.set_session(autocommit=True)
         dw_cursor.execute(open("./sql/dw.sql", "r").read())
+        dw_cursor.execute('CREATE DATABASE "{0}"'.format(users))
+        dw_cursor.execute('CREATE DATABASE "{0}"'.format(dojos))
+        dw_cursor.execute('CREATE DATABASE "{0}"'.format(events))
+        dw_cursor.execute('CREATE DATABASE "{0}"'.format(dw))
         dw_conn.set_session(autocommit=False)
         # Truncate all tables before fresh insert from sources
         dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')

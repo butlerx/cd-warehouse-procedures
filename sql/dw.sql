@@ -18,8 +18,8 @@ SET row_security = off;
 -- Name: zen-source; Type: SCHEMA; Schema: -; Owner: platform
 --
 
-CREATE SCHEMA "zen-source";
-ALTER SCHEMA "zen-source" OWNER TO platform;
+CREATE SCHEMA "zen_source";
+ALTER SCHEMA "zen_source" OWNER TO platform;
 
 SET search_path = public, pg_catalog;
 
