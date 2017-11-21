@@ -6,14 +6,13 @@ services:
       - POSTGRES_USER=platform
       - POSTGRES_PASSWORD=QdYx3D5y
   migration:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     image: coderdojo/cd-warehouse-procedures
     depends_on:
       - db
     volumes:
       - ./config:/usr/src/app/config
+      - ./etl:/usr/src/app/etl
 
 volumes:
   pg-data:

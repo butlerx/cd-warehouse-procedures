@@ -8,11 +8,19 @@ from databases import (dojos_cursor, dw_conn, dw_cursor, events_cursor,
 from isodate import parse_datetime
 
 
-def migrate_db():
+def setup_db():
     try:
         dw_conn.set_session(autocommit=True)
         dw_cursor.execute(open("./sql/dw.sql", "r").read())
         dw_conn.set_session(autocommit=False)
+    except (psycopg2.Error) as e:
+        print(e)
+        dw_conn.set_session(autocommit=False)
+        pass
+
+
+def migrate_db():
+    try:
         # Truncate all tables before fresh insert from sources
         dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimDojos" CASCADE')
@@ -112,8 +120,7 @@ def migrate_db():
             measures(row)
         print("Inserted measures")
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def transformBadges(row):
@@ -262,8 +269,7 @@ def insertDojo(dojo_id, created_at, verified_at, stage, country, city, county,
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def insertEvent(event_id, recurring_type, country, city, created_at,
@@ -288,8 +294,7 @@ def insertEvent(event_id, recurring_type, country, city, created_at,
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def insertUser(user_id, dob, country, continent, city, gender, user_type,
@@ -313,8 +318,7 @@ def insertUser(user_id, dob, country, continent, city, gender, user_type,
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def insertTickets(ticket_id, ticket_type, quantity, deleted):
@@ -331,8 +335,7 @@ def insertTickets(ticket_id, ticket_type, quantity, deleted):
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def insertLocation(country, city, location_id):
@@ -348,8 +351,7 @@ def insertLocation(country, city, location_id):
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def insertTime(datetime, time_id):
@@ -368,8 +370,7 @@ def insertTime(datetime, time_id):
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def staging(row):
@@ -422,8 +423,7 @@ def staging(row):
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def addBadge(row):
@@ -440,8 +440,7 @@ def addBadge(row):
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)
 
 
 def insertBadge(id, archived, type, name, badge_id, user_id):
@@ -460,5 +459,4 @@ def insertBadge(id, archived, type, name, badge_id, user_id):
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)

@@ -12,10 +12,10 @@ def restore_db(host, database, user, password, path):
     my_env = os.environ.copy()
     my_env["PATH"] = "/usr/sbin:/sbin:" + my_env["PATH"]
     tar.wait()
-    os.environ["PGPASSWORD"] = password
+    my_env["PGPASSWORD"] = password
     pg = Popen(
         shlex.split(
-            'pg_restore -c --if-exists -h {0} -d {1} -U {2} /db/backup_dump'.
+            'pg_restore -c --if-exists -w -h {0} -d {1} -U {2} /db/backup_dump'.
             format(host, database, user)),
         shell=False,
         stderr=STDOUT,

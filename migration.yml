@@ -15,17 +15,13 @@ spec:
       containers:
         - name: migration
           image: coderdojo/cd-warehouse-procedures
-          env:
-            - name: PGPASSWORD
-              value: AheruK5SCqwWUWlIzQ1wu0GsZH6EoaoD46oiRNqL
-            - name: PGUSER
-              value: platform
-            - name: PGHOST
-              value: cddatawarehouse.clp8wc9jm1pr.eu-west-1.rds.amazonaws.com
-            - name: AWS_ACCESS
-              value: AKIAIGU6NO47JPNBQBCQ
-            - name: AWS_SECRET
-              value: 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
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/src/app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: warehouse-config
       restartPolicy: OnFailure
 ---
 apiVersion: batch/v2alpha1
