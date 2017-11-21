@@ -39,14 +39,41 @@ def migrate_db():
             FROM cd_dojos
             WHERE verified = 1 and deleted = 0 and stage != 4
         ''')
-        for row in dojos_cursor:
-            transformDojo(row)
+        insert('''
+            INSERT INTO "public"."dimDojos"(
+                id,
+                created,
+                verified_at,
+                stage,
+                country,
+                city,
+                county,
+                state,
+                continent,
+                tao_verified,
+                expected_attendees,
+                verified,
+                deleted)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', map(transformDojos, dojos_cursor))
         print("Inserted all dojos")
 
         # Queries - Events
         events_cursor.execute('SELECT * FROM cd_events')
-        for row in events_cursor:
-            transformEvent(row)
+        insert('''
+            INSERT INTO "public"."dimEvents"(
+                event_id,
+                recurring_type,
+                country,
+                city,
+                created_at,
+                type,
+                dojo_id,
+                public,
+                status
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', map(transformEvents, events_cursor))
         print("Inserted all events and locations")
 
         # Queries - Users
@@ -55,8 +82,19 @@ def migrate_db():
             FROM cd_profiles
             INNER JOIN sys_user ON cd_profiles.user_id = sys_user.id
         ''')
-        for row in users_cursor:
-            transformUser(row)
+        insert('''
+            INSERT INTO "public"."dimUsers"(
+                user_id,
+                dob,
+                country,
+                continent,
+                city,
+                gender,
+                user_type,
+                roles,
+                mailing_list)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', map(transformUsers, users_cursor))
         print("Inserted all users")
 
         # Queries - Tickets
@@ -65,8 +103,14 @@ def migrate_db():
             FROM cd_sessions
             INNER JOIN cd_tickets ON cd_sessions.id = cd_tickets.session_id
         ''')
-        for row in events_cursor:
-            transformTicket(row)
+        insert('''
+            INSERT INTO "public"."dimTickets"(
+                ticket_id,
+                type,
+                quantity,
+                deleted
+            ) VALUES (%s, %s, %s, %s)
+        ''', map(transformTickets, events_cursor))
         print("Inserted all tickets")
 
         # Queries - Badges
@@ -136,7 +180,7 @@ def transformBadges(row):
         insertBadge(id, archived, type, name, badge_id, user_id)
 
 
-def transformDojo(row):  # Transform / Load for Dojo Dimension
+def transformDojos(row):  # Transform / Load for Dojo Dimension
     dojo_id = row['id']
     created_at = row['created']
     verified_at = row['verified_at']
@@ -170,12 +214,12 @@ def transformDojo(row):  # Transform / Load for Dojo Dimension
     if state is not 'Unknown':
         state = state['toponymName']
 
-    insertDojo(dojo_id, created_at, verified_at, stage, country, city, county,
-               state, continent, tao_verified, expected_attendees, verified,
-               deleted)
+    return (dojo_id, created_at, verified_at, stage, country, city, county,
+            state, continent, tao_verified, expected_attendees, verified,
+            deleted)
 
 
-def transformEvent(row):  # Transform / Load for Event Dimension
+def transformEvents(row):  # Transform / Load for Event Dimension
     event_id = row['id']
     recurring_type = row['recurring_type']
     country = row['country'] if (row['country'] is not None
@@ -198,11 +242,11 @@ def transformEvent(row):  # Transform / Load for Event Dimension
         else:
             city = city['nameWithHierarchy']
 
-    insertEvent(event_id, recurring_type, country, city, created_at,
-                event_type, dojo_id, public, status)
+    return (event_id, recurring_type, country, city, created_at, event_type,
+            dojo_id, public, status)
 
 
-def transformUser(row):  # Transform / Load for User Dimension
+def transformUsers(row):  # Transform / Load for User Dimension
     user_id = row['user_id']
     dob = row['dob']
     country = row['country'] if (row['country'] is not None
@@ -230,110 +274,22 @@ def transformUser(row):  # Transform / Load for User Dimension
     if roles:
         roles = roles[0] if len(roles) > 0 else 'Unknown'
 
-    insertUser(user_id, dob, country, continent, city, gender, user_type,
-               roles, mailing_list)
+    return (user_id, dob, country, continent, city, gender, user_type, roles,
+            mailing_list)
 
 
-def transformTicket(row):
+def transformTickets(row):
     ticket_id = row['ticket_id']
     ticket_type = row['type']
     quantity = row['quantity']
     deleted = row['deleted']
 
-    insertTickets(ticket_id, ticket_type, quantity, deleted)
+    return (ticket_id, ticket_type, quantity, deleted)
 
 
-def insertDojo(dojo_id, created_at, verified_at, stage, country, city, county,
-               state, continent, tao_verified, expected_attendees, verified,
-               deleted):
-    sql = '''
-            INSERT INTO "public"."dimDojos"(
-                id,
-                created,
-                verified_at,
-                stage,
-                country,
-                city,
-                county,
-                state,
-                continent,
-                tao_verified,
-                expected_attendees,
-                verified,
-                deleted)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        '''
-    data = (dojo_id, created_at, verified_at, stage, country, city, county,
-            state, continent, tao_verified, expected_attendees, verified,
-            deleted)
+def insert(sql, data):
     try:
-        dw_cursor.execute(sql, data)
-        dw_conn.commit()
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def insertEvent(event_id, recurring_type, country, city, created_at,
-                event_type, dojo_id, public, status):
-    sql = '''
-        INSERT INTO "public"."dimEvents"(
-            event_id,
-            recurring_type,
-            country,
-            city,
-            created_at,
-            type,
-            dojo_id,
-            public,
-            status
-        )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    '''
-    data = (event_id, recurring_type, country, city, created_at, event_type,
-            dojo_id, public, status)
-    try:
-        dw_cursor.execute(sql, data)
-        dw_conn.commit()
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def insertUser(user_id, dob, country, continent, city, gender, user_type,
-               roles, mailing_list):
-    sql = '''
-        INSERT INTO "public"."dimUsers"(
-            user_id,
-            dob,
-            country,
-            continent,
-            city,
-            gender,
-            user_type,
-            roles,
-            mailing_list)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    '''
-    data = (user_id, dob, country, continent, city, gender, user_type, roles,
-            mailing_list)
-    try:
-        dw_cursor.execute(sql, data)
-        dw_conn.commit()
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def insertTickets(ticket_id, ticket_type, quantity, deleted):
-    sql = '''
-        INSERT INTO "public"."dimTickets"(
-            ticket_id,
-            type,
-            quantity,
-            deleted
-        ) VALUES (%s, %s, %s, %s)
-    '''
-    data = (ticket_id, ticket_type, quantity, deleted)
-    try:
-        dw_cursor.execute(sql, data)
+        dw_cursor.executemany(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
         raise (e)
