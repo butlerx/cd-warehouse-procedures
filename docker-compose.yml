@@ -2,9 +2,6 @@ version: '3'
 services:
   db:
     image: postgres
-    restart: always
-    ports:
-     - "5432"
     environment:
       - POSTGRES_USER=platform
       - POSTGRES_PASSWORD=QdYx3D5y
@@ -12,14 +9,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: coderdojo/cd-warehouse-procedures
     depends_on:
       - db
-    environment:
-      - AWS_ACCESS=
-      - AWS_SECRET=
-      - PGPASSWORD=QdYx3D5y
-      - PGUSER=platform
-      - PGHOST=db
+    volumes:
+      - ./config:/usr/src/app/config
 
 volumes:
   pg-data:

@@ -17,21 +17,22 @@ spec:
           image: coderdojo/cd-warehouse-procedures
           env:
             - name: PGPASSWORD
-              value: QdYx3D5y
+              value: AheruK5SCqwWUWlIzQ1wu0GsZH6EoaoD46oiRNqL
             - name: PGUSER
               value: platform
             - name: PGHOST
-              value: db
+              value: cddatawarehouse.clp8wc9jm1pr.eu-west-1.rds.amazonaws.com
             - name: AWS_ACCESS
-              value:
+              value: AKIAIGU6NO47JPNBQBCQ
             - name: AWS_SECRET
-              value: 
+              value: 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
       restartPolicy: OnFailure
 ---
 apiVersion: batch/v2alpha1
 kind: CronJob
 metadata:
   name: warehouse-migration
+  namespace: warehouse
 spec:
   schedule: "0 1 1 * * "
   jobTemplate:

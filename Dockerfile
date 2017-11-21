@@ -7,5 +7,4 @@ RUN apk add --update build-base postgresql-dev postgresql && \
     mkdir /db && \
     apk del build-base
 COPY . /usr/src/app
-ENV AWS_ACCESS AWS_SECRET
 CMD [ "python", "./etl/main.py" ]

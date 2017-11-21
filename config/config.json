@@ -5,7 +5,14 @@
     "events": "cp-events-development",
     "dw": "cdDataWarehouse"
   },
+  "postgres": {
+    "host": "db",
+    "user": "platform",
+    "password": "QdYx3D5y"
+  },
   "s3": {
-    "bucket": "zen-pg-backup"
+    "bucket": "zen-pg-backup",
+    "access": "",
+    "secret": ""
   }
 }
