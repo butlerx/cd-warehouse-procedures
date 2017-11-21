@@ -6,7 +6,7 @@ from databases import (dojos_cursor, dw_conn, dw_cursor, events_cursor,
                        users_cursor)
 
 
-def measures(row):
+def measures(args):
     # Was commented before i got the script
     active_dojos = 0
     countries_with_active_dojos = 0
@@ -22,6 +22,15 @@ def measures(row):
     o13_female = 0
     verified_dojos_since_2017 = 0
     dojos_active_login = 0
+    dojo_id = args['dojo_id']
+    ticket_id = args['ticket_id']
+    # session_id = row['session_id']
+    event_id = args['event_id']
+    user_id = args['user_id']
+    time_id = args['time_id']
+    location_id = args['location_id']
+    id = str(uuid.uuid4())
+    badge_id = args['badge_id']
 
     # Active dojos
     dojos_cursor.execute('''
@@ -71,7 +80,7 @@ def measures(row):
     users_cursor.execute('''
         SELECT COUNT(*) AS cnt
         FROM cd_profiles
-        WHERE user_type = \'champion\''
+        WHERE user_type = \'champion\'
     ''')
     for row in users_cursor:
         total_champions = row['cnt']
@@ -89,7 +98,7 @@ def measures(row):
     users_cursor.execute('''
         SELECT COUNT(*) AS cnt
         FROM cd_profiles
-        WHERE dob < NOW() - INTERVAL \'18 years\''
+        WHERE dob < NOW() - INTERVAL \'18 years\'
     ''')
     for row in users_cursor:
         total_adults = row['cnt']
@@ -107,7 +116,7 @@ def measures(row):
     users_cursor.execute('''
         SELECT COUNT(*) AS cnt
         FROM cd_profiles
-        WHERE user_type = \'attendee-u13\' AND gender = \'Male\''
+        WHERE user_type = \'attendee-u13\' AND gender = \'Male\'
     ''')
     for row in users_cursor:
         u13_male = row['cnt']
@@ -116,7 +125,7 @@ def measures(row):
     users_cursor.execute('''
         SELECT COUNT(*) AS cnt
         FROM cd_profiles
-        WHERE user_type = \'attendee-u13\' and gender = \'Female\''
+        WHERE user_type = \'attendee-u13\' and gender = \'Female\'
     ''')
     for row in users_cursor:
         u13_female = row['cnt']
@@ -185,16 +194,6 @@ def measures(row):
             o13_female, verified_dojos_since_2017, dojos_active_login)
     # End of comment section
 
-    dojo_id = row['dojo_id']
-    ticket_id = row['ticket_id']
-    # session_id = row['session_id']
-    event_id = row['event_id']
-    user_id = row['user_id']
-    time_id = row['time_id']
-    location_id = row['location_id']
-    id = str(uuid.uuid4())
-    badge_id = row['badge_id']
-
     sql = '''
         INSERT INTO "public"."factUsers"(
             dojo_id,
@@ -213,5 +212,4 @@ def measures(row):
         dw_cursor.execute(sql, data)
         dw_conn.commit()
     except (psycopg2.Error) as e:
-        print(e)
-        pass
+        raise (e)

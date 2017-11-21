@@ -9,16 +9,16 @@ def restore_db(host, database, user, password, path):
         shlex.split('tar xvf {0} -C /db'.format(path)),
         shell=False,
         stderr=STDOUT)
-    my_env = os.environ.copy()
-    my_env["PATH"] = "/usr/sbin:/sbin:" + my_env["PATH"]
+    pg_env = os.environ.copy()
+    pg_env["PATH"] = "/usr/sbin:/sbin:" + pg_env["PATH"]
+    pg_env["PGPASSWORD"] = password
     tar.wait()
-    my_env["PGPASSWORD"] = password
     pg = Popen(
         shlex.split(
             'pg_restore -c --if-exists -w -h {0} -d {1} -U {2} /db/backup_dump'.
             format(host, database, user)),
         shell=False,
         stderr=STDOUT,
-        env=my_env)
+        env=pg_env)
     pg.wait()
     rmtree('/db/backup_dump')

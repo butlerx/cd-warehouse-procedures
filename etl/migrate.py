@@ -1,11 +1,11 @@
 import uuid
 
-import measures
 import psycopg2
 import psycopg2.extras
 from databases import (dojos_cursor, dw_conn, dw_cursor, events_cursor,
                        users_cursor)
 from isodate import parse_datetime
+from measures import measures
 
 
 def setup_db():
@@ -21,6 +21,7 @@ def setup_db():
 
 def migrate_db():
     try:
+        setup_db()
         # Truncate all tables before fresh insert from sources
         dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimDojos" CASCADE')
