@@ -29,7 +29,7 @@ def migrate_db():
         dw_cursor.execute('TRUNCATE TABLE "dimLocation" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimTime" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimTickets" CASCADE')
-        dw_cursor.execute('TRUNCATE TABLE "zen-source"."staging" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "zen_source"."staging" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimBadges" CASCADE')
 
         # Queries - Dojos
@@ -102,19 +102,19 @@ def migrate_db():
         SELECT staging.dojo_id, staging.ticket_id, staging.session_id,
             staging.event_id, staging.user_id, staging.time_id,
             staging.location_id, staging.badge_id
-        FROM "zen-source"."staging"
+        FROM "zen_source"."staging"
         INNER JOIN "public"."dimDojos"
-        ON "zen-source"."staging".dojo_id = "public"."dimDojos".id
+        ON "zen_source"."staging".dojo_id = "public"."dimDojos".id
         INNER JOIN "public"."dimEvents"
-        ON "zen-source"."staging".event_id = "public"."dimEvents".event_id
+        ON "zen_source"."staging".event_id = "public"."dimEvents".event_id
         INNER JOIN "public"."dimUsers"
-        ON "zen-source"."staging".user_id = "public"."dimUsers".user_id
+        ON "zen_source"."staging".user_id = "public"."dimUsers".user_id
         INNER JOIN "public"."dimTime"
-        ON "zen-source"."staging".time_id = "public"."dimTime".time_id
+        ON "zen_source"."staging".time_id = "public"."dimTime".time_id
         INNER JOIN "public"."dimLocation" ON
-        "zen-source"."staging".location_id = "public"."dimLocation".location_id
+        "zen_source"."staging".location_id = "public"."dimLocation".location_id
         INNER JOIN "public"."dimBadges"
-        ON "zen-source"."staging".badge_id = "public"."dimBadges".badge_id
+        ON "zen_source"."staging".badge_id = "public"."dimBadges".badge_id
         ''')
         for row in dw_cursor.fetchall():
             measures(row)
@@ -406,7 +406,7 @@ def staging(row):
     insertLocation(country, city, location_id)
 
     sql = '''
-        INSERT INTO "zen-source"."staging"(
+        INSERT INTO "zen_source"."staging"(
             user_id,
             dojo_id,
             event_id,
@@ -431,7 +431,7 @@ def addBadge(row):
     badge_id = row['badge_id']
 
     sql = '''
-        UPDATE "zen-source".staging
+        UPDATE "zen_source".staging
         SET badge_id=%s
         WHERE user_id=%s
     '''

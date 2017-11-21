@@ -15,7 +15,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: zen-source; Type: SCHEMA; Schema: -; Owner: platform
+-- Name: zen_source; Type: SCHEMA; Schema: -; Owner: platform
 --
 
 CREATE SCHEMA "zen_source";
@@ -164,10 +164,10 @@ CREATE TABLE "factUsers" (
 
 ALTER TABLE "factUsers" OWNER TO platform;
 
-SET search_path = "zen-source", pg_catalog;
+SET search_path = "zen_source", pg_catalog;
 
 --
--- Name: staging; Type: TABLE; Schema: zen-source; Owner: platform
+-- Name: staging; Type: TABLE; Schema: zen_source; Owner: platform
 --
 
 CREATE TABLE staging (
@@ -250,10 +250,10 @@ SET search_path = public, pg_catalog;
 -- \.
 
 
-SET search_path = "zen-source", pg_catalog;
+SET search_path = "zen_source", pg_catalog;
 
 --
--- Data for Name: staging; Type: TABLE DATA; Schema: zen-source; Owner: platform
+-- Data for Name: staging; Type: TABLE DATA; Schema: zen_source; Owner: platform
 --
 
 -- COPY staging (user_id, dojo_id, event_id, session_id, ticket_id, id, time_id, location_id, badge_id) FROM stdin;
@@ -326,10 +326,10 @@ ALTER TABLE ONLY "factUsers"
     ADD CONSTRAINT "factUsers_pkey" PRIMARY KEY (id);
 
 
-SET search_path = "zen-source", pg_catalog;
+SET search_path = "zen_source", pg_catalog;
 
 --
--- Name: staging PK_staging; Type: CONSTRAINT; Schema: zen-source; Owner: platform
+-- Name: staging PK_staging; Type: CONSTRAINT; Schema: zen_source; Owner: platform
 --
 
 ALTER TABLE ONLY staging
