@@ -1,6 +1,6 @@
 import os
 import shlex
-from subprocess import STDOUT, Popen
+from subprocess import DEVNULL, STDOUT, Popen
 
 
 def restore_db(host, database, user, password, name):
@@ -11,6 +11,7 @@ def restore_db(host, database, user, password, name):
     tar = Popen(
         shlex.split('tar xvf {0} -C {1}'.format(path, directory)),
         shell=False,
+        stdout=DEVNULL,
         stderr=STDOUT)
     pg_env = os.environ.copy()
     pg_env["PATH"] = "/usr/sbin:/sbin:" + pg_env["PATH"]

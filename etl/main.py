@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import argparse
+import asyncio
 import json
 import sys
 
@@ -25,7 +26,7 @@ events = data['databases']['events']
 users = data['databases']['users']
 
 
-def get(name, dev):
+async def get(name, dev):
     print('Restoring db', name)
     sys.stdout.flush()
     if (not dev):
@@ -36,8 +37,8 @@ def get(name, dev):
 def main():
     parser = argparse.ArgumentParser(
         description='migrate production databases backups to datawarehouse')
-    parser.add_argument(
-        '--dev', action='store_true', help='dev mode to use local backups')
+    parser.add_argument('--dev', action='store_true',
+                        help='dev mode to use local backups')
     args = parser.parse_args()
     try:
         # Postgres
@@ -75,9 +76,13 @@ def main():
         users_cursor = users_conn.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
 
-        get('dojos', args.dev)
-        get('events', args.dev)
-        get('users', args.dev)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(asyncio.gather(
+            get('dojos', args.dev),
+            get('events', args.dev),
+            get('users', args.dev),
+        ))
+        loop.close()
 
         migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor)
         print("data migrated")
