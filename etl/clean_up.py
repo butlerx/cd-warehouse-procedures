@@ -36,6 +36,5 @@ def disconnect(cursor, db):
             WHERE pg_stat_activity.datname = "{0}"
               AND pid <> pg_backend_pid();
             '''.format(db))
-    except (psycopg2.Error) as e:
-        print(e)
+    except (psycopg2.Error):
         pass

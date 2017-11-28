@@ -50,7 +50,7 @@ def main():
         dw_setup.set_session(autocommit=True)
         cursor = dw_setup.cursor()
         reset_databases(cursor, dojos, dw, events, users)
-        print("databases reset")
+        print("Databases Reset")
         sys.stdout.flush()
 
         # cdDataWarehouse
@@ -76,6 +76,7 @@ def main():
         users_cursor = users_conn.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
 
+        # Download and restore db in parallel
         loop = asyncio.get_event_loop()
         loop.run_until_complete(asyncio.gather(
             get('dojos', args.dev),
@@ -85,19 +86,23 @@ def main():
         loop.close()
 
         migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor)
-        print("data migrated")
+        print("Databases Migrated")
         sys.stdout.flush()
 
         # Close Database connections and delete the dev databases
-        dw_cursor.close()
-        users_cursor.close()
-        events_cursor.close()
-        dojos_cursor.close()
+        dw_cursor.connection.close()
+        users_cursor.connection.close()
+        events_cursor.connection.close()
+        dojos_cursor.connection.close()
         clean_databases(cursor, dojos, events, users)
-        cursor.close
+        print("Removed ", dojos, events, users)
+        cursor.connection.close()
         sys.exit(0)
     except (psycopg2.Error) as e:
         print(e)
+        clean_databases(cursor, dojos, events, users)
+        print("Removed ", dojos, events, users)
+        cursor.close
         sys.exit(1)
 
 

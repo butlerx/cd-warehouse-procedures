@@ -173,9 +173,9 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
 
         # Queries - Measures
         dw_cursor.execute('''
-        SELECT dojo_id, ticket_id, session_id,
-            event_id, user_id, time_id,
-            location_id, badge_id
+        SELECT "staging".dojo_id, "staging".ticket_id, "staging".session_id,
+            "staging".event_id, "staging".user_id, "staging".time_id,
+            "staging".location_id, "staging".badge_id
         FROM "staging"
         INNER JOIN "dimDojos"
         ON "staging".dojo_id = "dimDojos".id
@@ -203,26 +203,26 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 badge_id
             ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(get_id, ids))
-        dw_cursor.executemany('''
-        INSERT INTO "public"."factUsers"(
-            active_dojos,
-            countries_with_active_dojos,
-            events_in_last_30_days,
-            dojos_3_events_in_3_months,
-            total_champions,
-            total_mentors,
-            total_adults,
-            total_youth,
-            u13_male,
-            u13_female,
-            o13_male,
-            o13_female,
-            verified_dojos_since_2017,
-            dojos_active_login
-        ) VALUES(
-            % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s)
-        ''', map(measure(dojos_cursor, users_cursor, events_cursor), ids))
-        print("Inserted measures")
-        sys.stdout.flush()
+    #  dw_cursor.executemany('''
+    #  INSERT INTO "public"."factUsers"(
+    #      active_dojos,
+    #      countries_with_active_dojos,
+    #      events_in_last_30_days,
+    #      dojos_3_events_in_3_months,
+    #      total_champions,
+    #      total_mentors,
+    #      total_adults,
+    #      total_youth,
+    #      u13_male,
+    #      u13_female,
+    #      o13_male,
+    #      o13_female,
+    #      verified_dojos_since_2017,
+    #      dojos_active_login
+    #  ) VALUES(
+    #      %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    #  ''', map(measure(dojos_cursor, users_cursor, events_cursor), ids))
+    #  print("Inserted measures")
+    #  sys.stdout.flush()
     except (psycopg2.Error) as e:
         raise (e)
