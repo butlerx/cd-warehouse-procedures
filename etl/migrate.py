@@ -1,27 +1,24 @@
-import uuid
-
 import psycopg2
 import psycopg2.extras
-from databases import (dojos_cursor, dw_conn, dw_cursor, events_cursor,
-                       users_cursor)
-from isodate import parse_datetime
-from measures import measures
+from badges import add_badges, transform_badges
+from dojos import transform_dojo
+from events import transform_event
+from measures import get_id, measure
+from staging import stage
+from tickets import transform_ticket
+from users import transform_user
 
 
-def setup_db():
+def setup_warehouse(dw_cursor):
     try:
-        dw_conn.set_session(autocommit=True)
         dw_cursor.execute(open("./sql/dw.sql", "r").read())
-        dw_conn.set_session(autocommit=False)
     except (psycopg2.Error) as e:
         print(e)
-        dw_conn.set_session(autocommit=False)
         pass
 
 
-def migrate_db():
+def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
     try:
-        setup_db()
         # Truncate all tables before fresh insert from sources
         dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimDojos" CASCADE')
@@ -30,7 +27,7 @@ def migrate_db():
         dw_cursor.execute('TRUNCATE TABLE "dimLocation" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimTime" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimTickets" CASCADE')
-        dw_cursor.execute('TRUNCATE TABLE "zen_source"."staging" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "staging" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimBadges" CASCADE')
 
         # Queries - Dojos
@@ -39,7 +36,7 @@ def migrate_db():
             FROM cd_dojos
             WHERE verified = 1 and deleted = 0 and stage != 4
         ''')
-        insert('''
+        dw_cursor.executemany('''
             INSERT INTO "public"."dimDojos"(
                 id,
                 created,
@@ -55,12 +52,12 @@ def migrate_db():
                 verified,
                 deleted)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', map(transformDojos, dojos_cursor))
+        ''', map(transform_dojo, dojos_cursor.fetchall()))
         print("Inserted all dojos")
 
         # Queries - Events
         events_cursor.execute('SELECT * FROM cd_events')
-        insert('''
+        dw_cursor.executemany('''
             INSERT INTO "public"."dimEvents"(
                 event_id,
                 recurring_type,
@@ -73,7 +70,7 @@ def migrate_db():
                 status
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', map(transformEvents, events_cursor))
+        ''', map(transform_event, events_cursor.fetchall()))
         print("Inserted all events and locations")
 
         # Queries - Users
@@ -82,7 +79,7 @@ def migrate_db():
             FROM cd_profiles
             INNER JOIN sys_user ON cd_profiles.user_id = sys_user.id
         ''')
-        insert('''
+        dw_cursor.executemany('''
             INSERT INTO "public"."dimUsers"(
                 user_id,
                 dob,
@@ -94,7 +91,7 @@ def migrate_db():
                 roles,
                 mailing_list)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', map(transformUsers, users_cursor))
+        ''', map(transform_user, users_cursor.fetchall()))
         print("Inserted all users")
 
         # Queries - Tickets
@@ -103,25 +100,34 @@ def migrate_db():
             FROM cd_sessions
             INNER JOIN cd_tickets ON cd_sessions.id = cd_tickets.session_id
         ''')
-        insert('''
+        dw_cursor.executemany('''
             INSERT INTO "public"."dimTickets"(
                 ticket_id,
                 type,
                 quantity,
                 deleted
             ) VALUES (%s, %s, %s, %s)
-        ''', map(transformTickets, events_cursor))
+        ''', map(transform_ticket, events_cursor.fetchall()))
         print("Inserted all tickets")
 
         # Queries - Badges
         users_cursor.execute('''
-        SELECT user_id, to_json(badges)
-        AS badges
-        FROM cd_profiles
-        WHERE badges IS NOT null AND json_array_length(to_json(badges)) >= 1
+            SELECT user_id, to_json(badges)
+            AS badges
+            FROM cd_profiles
+            WHERE badges IS NOT null AND json_array_length(to_json(badges)) >= 1
         ''')
         for row in users_cursor.fetchall():
-            transformBadges(row)
+            dw_cursor.executemany('''
+                INSERT INTO "public"."dimBadges"(
+                    id,
+                    archived,
+                    type,
+                    name,
+                    badge_id,
+                    user_id
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            ''', transform_badges(row))
         print('Inserted badges')
 
         # Queries - Staging
@@ -133,237 +139,8 @@ def migrate_db():
         FROM cd_applications
         INNER JOIN cd_events ON cd_applications.event_id = cd_events.id
         ''')
-        for row in events_cursor:
-            staging(row)
-        print('Populated staging')
-
-        dw_cursor.execute('SELECT badge_id, user_id FROM "dimBadges"')
-        for row in dw_cursor.fetchall():
-            addBadge(row)
-        print('Badges added to staging')
-
-        # Queries - Measures
-        dw_cursor.execute('''
-        SELECT staging.dojo_id, staging.ticket_id, staging.session_id,
-            staging.event_id, staging.user_id, staging.time_id,
-            staging.location_id, staging.badge_id
-        FROM "zen_source"."staging"
-        INNER JOIN "public"."dimDojos"
-        ON "zen_source"."staging".dojo_id = "public"."dimDojos".id
-        INNER JOIN "public"."dimEvents"
-        ON "zen_source"."staging".event_id = "public"."dimEvents".event_id
-        INNER JOIN "public"."dimUsers"
-        ON "zen_source"."staging".user_id = "public"."dimUsers".user_id
-        INNER JOIN "public"."dimTime"
-        ON "zen_source"."staging".time_id = "public"."dimTime".time_id
-        INNER JOIN "public"."dimLocation" ON
-        "zen_source"."staging".location_id = "public"."dimLocation".location_id
-        INNER JOIN "public"."dimBadges"
-        ON "zen_source"."staging".badge_id = "public"."dimBadges".badge_id
-        ''')
-        for row in dw_cursor.fetchall():
-            measures(row)
-        print("Inserted measures")
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def transformBadges(row):
-    user_id = row['user_id']
-    badges = row['badges']
-    for element in badges:
-        id = element['id']
-        archived = element['archived']
-        type = element['type']
-        name = element['name']
-        badge_id = str(uuid.uuid4())
-        insertBadge(id, archived, type, name, badge_id, user_id)
-
-
-def transformDojos(row):  # Transform / Load for Dojo Dimension
-    dojo_id = row['id']
-    created_at = row['created']
-    verified_at = row['verified_at']
-    stage = row['stage']
-    country = row['country'] if (row['country'] is not None
-                                 ) and (len(row['country'])) > 0 else 'Unknown'
-    city = row['place'] if (row['city'] is
-                            not None) and (len(row['city'])) > 0 else 'Unknown'
-    county = row['county'] if (
-        row['county'] is not None) and (len(row['county'])) > 0 else 'Unknown'
-    state = row['state'] if (
-        row['state'] is not None) and (len(row['state'])) > 0 else 'Unknown'
-    continent = row['continent']
-    tao_verified = row['tao_verified']
-    expected_attendees = row['expected_attendees'] if (
-        row['expected_attendees'] is
-        not None) else 0  # Maybe something other than 0????
-    verified = row['verified']
-    deleted = row['deleted']
-
-    # For fields which zen prod dbs are storing as json
-    if country is not 'Unknown':
-        country = country['countryName']
-
-    if city is not 'Unknown':
-        city = city['name']
-
-    if county is not 'Unknown':
-        county = county['toponymName']
-
-    if state is not 'Unknown':
-        state = state['toponymName']
-
-    return (dojo_id, created_at, verified_at, stage, country, city, county,
-            state, continent, tao_verified, expected_attendees, verified,
-            deleted)
-
-
-def transformEvents(row):  # Transform / Load for Event Dimension
-    event_id = row['id']
-    recurring_type = row['recurring_type']
-    country = row['country'] if (row['country'] is not None
-                                 ) and (len(row['country'])) > 0 else 'Unknown'
-    city = row['city'] if (row['city'] is
-                           not None) and (len(row['city'])) > 0 else 'Unknown'
-    created_at = row['created_at']
-    event_type = row['type']
-    dojo_id = row['dojo_id']
-    public = row['public']
-    status = row['status']
-
-    # For fields which zen prod dbs are storing as json
-    if country is not 'Unknown':
-        country = country['countryName']
-
-    if city is not 'Unknown':
-        if 'toponymName' in city:
-            city = city['toponymName']
-        else:
-            city = city['nameWithHierarchy']
-
-    return (event_id, recurring_type, country, city, created_at, event_type,
-            dojo_id, public, status)
-
-
-def transformUsers(row):  # Transform / Load for User Dimension
-    user_id = row['user_id']
-    dob = row['dob']
-    country = row['country'] if (row['country'] is not None
-                                 ) and (len(row['country'])) > 0 else 'Unknown'
-    continent = row['country'] if (row['continent'] is not None) and (
-        len(row['continent'])) > 0 else 'Unknown'
-    city = row['city'] if (row['city'] is
-                           not None) and (len(row['city'])) > 0 else 'Unknown'
-    gender = row['gender'] if (
-        row['gender'] is not None) and (len(row['gender'])) > 0 else 'Unknown'
-    user_type = row['user_type']
-    roles = row['roles']
-    mailing_list = row['mailing_list']
-
-    # For fields which zen prod dbs are storing as json
-    if country is not 'Unknown':
-        country = country['countryName']
-
-    if continent is not 'Unknown':
-        continent = continent['continent']
-
-    if city is not 'Unknown':
-        city = city['nameWithHierarchy']
-
-    if roles:
-        roles = roles[0] if len(roles) > 0 else 'Unknown'
-
-    return (user_id, dob, country, continent, city, gender, user_type, roles,
-            mailing_list)
-
-
-def transformTickets(row):
-    ticket_id = row['ticket_id']
-    ticket_type = row['type']
-    quantity = row['quantity']
-    deleted = row['deleted']
-
-    return (ticket_id, ticket_type, quantity, deleted)
-
-
-def insert(sql, data):
-    try:
-        dw_cursor.executemany(sql, data)
-        dw_conn.commit()
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def insertLocation(country, city, location_id):
-    sql = '''
-        INSERT INTO "public"."dimLocation"(
-            country,
-            city,
-            location_id
-        ) VALUES (%s, %s, %s)
-    '''
-    data = (country, city, location_id)
-    try:
-        dw_cursor.execute(sql, data)
-        dw_conn.commit()
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def insertTime(datetime, time_id):
-    day = datetime.day
-    month = datetime.month
-    year = datetime.year
-    sql = '''
-        INSERT INTO "public"."dimTime"( year,
-            month,
-            day,
-            time_id
-        ) VALUES (%s, %s, %s, %s)
-    '''
-    data = (year, month, day, time_id)
-    try:
-        dw_cursor.execute(sql, data)
-        dw_conn.commit()
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def staging(row):
-    user_id = row['user_id']
-    dojo_id = row['dojo_id']
-    event_id = row['event_id']
-    session_id = row['session_id']
-    ticket_id = row['ticket_id']
-    time_id = str(uuid.uuid4())
-    location_id = str(uuid.uuid4())
-    id = row['id']
-    start_date = row['dates']
-
-    if start_date[0]['startTime'] is not None:
-        start_date = parse_datetime(start_date[0]['startTime'])
-        insertTime(start_date, time_id)
-
-    country = row['country'] if (row['country'] is not None
-                                 ) and (len(row['country'])) > 0 else 'Unknown'
-    city = row['city'] if (row['city'] is
-                           not None) and (len(row['city'])) > 0 else 'Unknown'
-
-    # For fields which zen prod dbs are storing as json
-    if country is not 'Unknown':
-        country = country['countryName']
-
-    if city is not 'Unknown':
-        if 'toponymName' in city:
-            city = city['toponymName']
-        else:
-            city = city['nameWithHierarchy']
-
-    insertLocation(country, city, location_id)
-
-    sql = '''
-        INSERT INTO "zen_source"."staging"(
+        dw_cursor.executemany('''
+        INSERT INTO "staging"(
             user_id,
             dojo_id,
             event_id,
@@ -372,48 +149,66 @@ def staging(row):
             time_id,
             location_id,
             id
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    '''
-    data = (user_id, dojo_id, event_id, session_id, ticket_id, time_id,
-            location_id, id)
-    try:
-        dw_cursor.execute(sql, data)
-        dw_conn.commit()
-    except (psycopg2.Error) as e:
-        raise (e)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        ''', map(stage(dw_cursor), events_cursor.fetchall()))
+        print('Populated staging')
 
+        dw_cursor.execute('SELECT badge_id, user_id FROM "dimBadges"')
+        rows = dw_cursor.fetchall()
+        add_badges(dw_cursor, rows)
+        print('Badges added to staging')
 
-def addBadge(row):
-    user_id = row['user_id']
-    badge_id = row['badge_id']
-
-    sql = '''
-        UPDATE "zen_source".staging
-        SET badge_id=%s
-        WHERE user_id=%s
-    '''
-    data = (badge_id, user_id)
-    try:
-        dw_cursor.execute(sql, data)
-        dw_conn.commit()
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def insertBadge(id, archived, type, name, badge_id, user_id):
-    sql = '''
-        INSERT INTO "public"."dimBadges"(
-            id,
-            archived,
-            type,
-            name,
-            badge_id,
-            user_id
-        ) VALUES (%s, %s, %s, %s, %s, %s)
-    '''
-    data = (id, archived, type, name, badge_id, user_id)
-    try:
-        dw_cursor.execute(sql, data)
-        dw_conn.commit()
+        # Queries - Measures
+        dw_cursor.execute('''
+        SELECT dojo_id, ticket_id, session_id,
+            event_id, user_id, time_id,
+            location_id, badge_id
+        FROM "staging"
+        INNER JOIN "dimDojos"
+        ON "staging".dojo_id = "dimDojos".id
+        INNER JOIN "dimEvents"
+        ON "staging".event_id = "dimEvents".event_id
+        INNER JOIN "dimUsers"
+        ON "staging".user_id = "dimUsers".user_id
+        INNER JOIN "dimTime"
+        ON "staging".time_id = "dimTime".time_id
+        INNER JOIN "dimLocation" ON
+        "staging".location_id = "dimLocation".location_id
+        INNER JOIN "dimBadges"
+        ON "staging".badge_id = "dimBadges".badge_id
+        ''')
+        ids = dw_cursor.fetchall()
+        dw_cursor.executemany('''
+            INSERT INTO "public"."factUsers"(
+                dojo_id,
+                ticket_id,
+                event_id,
+                user_id,
+                time_id,
+                location_id,
+                id,
+                badge_id
+            ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', map(get_id, ids))
+        dw_cursor.executemany('''
+        INSERT INTO "public"."factUsers"(
+            active_dojos,
+            countries_with_active_dojos,
+            events_in_last_30_days,
+            dojos_3_events_in_3_months,
+            total_champions,
+            total_mentors,
+            total_adults,
+            total_youth,
+            u13_male,
+            u13_female,
+            o13_male,
+            o13_female,
+            verified_dojos_since_2017,
+            dojos_active_login
+        ) VALUES(
+            % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s)
+        ''', map(measure(dojos_cursor, users_cursor, events_cursor), ids))
+        print("Inserted measures")
     except (psycopg2.Error) as e:
         raise (e)

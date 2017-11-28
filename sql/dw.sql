@@ -14,12 +14,6 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- Name: zen_source; Type: SCHEMA; Schema: -; Owner: platform
---
-
-CREATE SCHEMA "zen_source";
-ALTER SCHEMA "zen_source" OWNER TO platform;
 
 SET search_path = public, pg_catalog;
 
@@ -164,10 +158,8 @@ CREATE TABLE "factUsers" (
 
 ALTER TABLE "factUsers" OWNER TO platform;
 
-SET search_path = "zen_source", pg_catalog;
-
 --
--- Name: staging; Type: TABLE; Schema: zen_source; Owner: platform
+-- Name: staging; Type: TABLE; Schema: public; Owner: platform
 --
 
 CREATE TABLE staging (
@@ -184,8 +176,6 @@ CREATE TABLE staging (
 
 
 ALTER TABLE staging OWNER TO platform;
-
-SET search_path = public, pg_catalog;
 
 --
 -- Data for Name: dimBadges; Type: TABLE DATA; Schema: public; Owner: platform
@@ -250,17 +240,13 @@ SET search_path = public, pg_catalog;
 -- \.
 
 
-SET search_path = "zen_source", pg_catalog;
-
 --
--- Data for Name: staging; Type: TABLE DATA; Schema: zen_source; Owner: platform
+-- Data for Name: staging; Type: TABLE DATA; Schema: public; Owner: platform
 --
 
 -- COPY staging (user_id, dojo_id, event_id, session_id, ticket_id, id, time_id, location_id, badge_id) FROM stdin;
 -- \.
 
-
-SET search_path = public, pg_catalog;
 
 --
 -- Name: dimDojos PK_dimDojos; Type: CONSTRAINT; Schema: public; Owner: platform
@@ -268,7 +254,6 @@ SET search_path = public, pg_catalog;
 
 ALTER TABLE ONLY "dimDojos"
     ADD CONSTRAINT "PK_dimDojos" PRIMARY KEY (id);
-
 
 --
 -- Name: dimBadges dimBadges_pkey; Type: CONSTRAINT; Schema: public; Owner: platform
@@ -326,17 +311,12 @@ ALTER TABLE ONLY "factUsers"
     ADD CONSTRAINT "factUsers_pkey" PRIMARY KEY (id);
 
 
-SET search_path = "zen_source", pg_catalog;
-
 --
--- Name: staging PK_staging; Type: CONSTRAINT; Schema: zen_source; Owner: platform
+-- Name: staging PK_staging; Type: CONSTRAINT; Schema: public; Owner: platform
 --
 
 ALTER TABLE ONLY staging
     ADD CONSTRAINT "PK_staging" PRIMARY KEY (id);
-
-
-SET search_path = public, pg_catalog;
 
 --
 -- Name: FKI_factUsers_dimBadges; Type: INDEX; Schema: public; Owner: platform
