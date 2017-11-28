@@ -1,5 +1,8 @@
-#!/usr/bin/env python
+#! /usr/bin/env python3
 
+from __future__ import print_function
+
+import argparse
 import json
 import sys
 
@@ -22,7 +25,20 @@ events = data['databases']['events']
 users = data['databases']['users']
 
 
+def get(name, dev):
+    print('Restoring db', name)
+    sys.stdout.flush()
+    if (not dev):
+        download(name)
+    restore_db(db_host, data['databases'][name], db_user, db_password, name)
+
+
 def main():
+    parser = argparse.ArgumentParser(
+        description='migrate production databases backups to datawarehouse')
+    parser.add_argument(
+        '--dev', action='store_true', help='dev mode to use local backups')
+    args = parser.parse_args()
     try:
         # Postgres
         dw_setup = psycopg2.connect(
@@ -33,12 +49,14 @@ def main():
         dw_setup.set_session(autocommit=True)
         cursor = dw_setup.cursor()
         reset_databases(cursor, dojos, dw, events, users)
+        print("databases reset")
+        sys.stdout.flush()
 
         # cdDataWarehouse
         dw_conn = psycopg2.connect(
             dbname=dw, host=db_host, user=db_user, password=db_password)
         dw_cursor = dw_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        dw_cursor.set_session(autocommit=True)
+        dw_conn.set_session(autocommit=True)
         setup_warehouse(dw_cursor)
 
         # cp-dojos
@@ -57,15 +75,13 @@ def main():
         users_cursor = users_conn.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
 
-        download('dojos')
-        restore_db(db_host, dojos, db_user, db_password, '/db/dojos.tar.gz')
-        download('events')
-        restore_db(db_host, events, db_user, db_password, '/db/events.tar.gz')
-        download('users')
-        restore_db(db_host, users, db_user, db_password, '/db/users.tar.gz')
+        get('dojos', args.dev)
+        get('events', args.dev)
+        get('users', args.dev)
 
         migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor)
         print("data migrated")
+        sys.stdout.flush()
 
         # Close Database connections and delete the dev databases
         dw_cursor.close()
@@ -79,5 +95,6 @@ def main():
         print(e)
         sys.exit(1)
 
-    if __name__ == '__main__':
-        main()
+
+if __name__ == '__main__':
+    main()

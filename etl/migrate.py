@@ -1,3 +1,5 @@
+import sys
+
 import psycopg2
 import psycopg2.extras
 from badges import add_badges, transform_badges
@@ -54,6 +56,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_dojo, dojos_cursor.fetchall()))
         print("Inserted all dojos")
+        sys.stdout.flush()
 
         # Queries - Events
         events_cursor.execute('SELECT * FROM cd_events')
@@ -72,6 +75,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_event, events_cursor.fetchall()))
         print("Inserted all events and locations")
+        sys.stdout.flush()
 
         # Queries - Users
         users_cursor.execute('''
@@ -93,6 +97,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_user, users_cursor.fetchall()))
         print("Inserted all users")
+        sys.stdout.flush()
 
         # Queries - Tickets
         events_cursor.execute('''
@@ -109,6 +114,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             ) VALUES (%s, %s, %s, %s)
         ''', map(transform_ticket, events_cursor.fetchall()))
         print("Inserted all tickets")
+        sys.stdout.flush()
 
         # Queries - Badges
         users_cursor.execute('''
@@ -129,6 +135,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 ) VALUES (%s, %s, %s, %s, %s, %s)
             ''', transform_badges(row))
         print('Inserted badges')
+        sys.stdout.flush()
 
         # Queries - Staging
         events_cursor.execute('''
@@ -152,11 +159,17 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(stage(dw_cursor), events_cursor.fetchall()))
         print('Populated staging')
+        sys.stdout.flush()
 
         dw_cursor.execute('SELECT badge_id, user_id FROM "dimBadges"')
         rows = dw_cursor.fetchall()
-        add_badges(dw_cursor, rows)
+        dw_cursor.executemany('''
+            UPDATE "staging"
+            SET badge_id=%s
+            WHERE user_id=%s
+        ''', add_badges(rows))
         print('Badges added to staging')
+        sys.stdout.flush()
 
         # Queries - Measures
         dw_cursor.execute('''
@@ -210,5 +223,6 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s)
         ''', map(measure(dojos_cursor, users_cursor, events_cursor), ids))
         print("Inserted measures")
+        sys.stdout.flush()
     except (psycopg2.Error) as e:
         raise (e)

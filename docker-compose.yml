@@ -12,7 +12,9 @@ services:
       - db
     volumes:
       - ./config:/usr/src/app/config
+      - ./sql:/usr/src/app/sql
       - ./etl:/usr/src/app/etl
+      - ./dumps:/db
 
 volumes:
   pg-data:
