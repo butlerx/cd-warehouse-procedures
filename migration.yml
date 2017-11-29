@@ -40,15 +40,38 @@ spec:
           containers:
             - name: migration
               image: coderdojo/cd-warehouse-procedures
-              env:
-                - name: PGPASSWORD
-                  value: QdYx3D5y
-                - name: PGUSER
-                  value: platform
-                - name: PGHOST
-                  value: db
-                - name: AWS_ACCESS
-                  value:
-                - name: AWS_SECRET
-                  value:
+              volumeMounts:
+                - name: config-volume
+                  mountPath: /usr/src/app/config
+          volumes:
+            - name: config-volume
+              configMap:
+                name: warehouse-config
           restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: warehouse-config
+  namespace: warehouse
+data:
+  config.json: |-
+    {
+      "databases": {
+        "dojos": "cp-dojos-development",
+        "users": "cp-users-development",
+        "events": "cp-events-development",
+        "dw": "cdDataWarehouse"
+      },
+      "postgres": {
+        "host": "db",
+        "user": "platform",
+        "password": "password"
+      },
+      "s3": {
+        "bucket": "zen-pg-backup",
+        "access": "",
+        "secret": ""
+      }
+    }
+---
