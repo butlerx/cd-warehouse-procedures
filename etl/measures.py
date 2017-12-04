@@ -157,10 +157,10 @@ def get_id(args):
     # session_id = args['session_id']
     event_id = args['event_id']
     user_id = args['user_id']
-    time_id = args['time_id']
+    time = args['time']
     location_id = args['location_id']
     id = str(uuid.uuid4())
     badge_id = args['badge_id']
-    data = (dojo_id, ticket_id, event_id, user_id, time_id, location_id, id,
+    data = (dojo_id, ticket_id, event_id, user_id, time, location_id, id,
             badge_id)
     return data

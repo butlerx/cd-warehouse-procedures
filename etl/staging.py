@@ -12,14 +12,14 @@ def stage(cursor):
         event_id = row['event_id']
         session_id = row['session_id']
         ticket_id = row['ticket_id']
-        time_id = str(uuid.uuid4())
+        time = None
         location_id = str(uuid.uuid4())
         id = row['id']
         start_date = row['dates']
 
         if start_date[0]['startTime'] is not None:
             start_date = parse_datetime(start_date[0]['startTime'])
-            insert_time(cursor, start_date, time_id)
+            time = start_date
 
         country = row['country'] if (row['country'] is not None) and (
             len(row['country'])) > 0 else 'Unknown'
@@ -38,7 +38,7 @@ def stage(cursor):
 
         insert_location(cursor, country, city, location_id)
 
-        data = (user_id, dojo_id, event_id, session_id, ticket_id, time_id,
+        data = (user_id, dojo_id, event_id, session_id, ticket_id, time,
                 location_id, id)
         return data
 
@@ -54,24 +54,6 @@ def insert_location(cursor, country, city, location_id):
         ) VALUES (%s, %s, %s)
     '''
     data = (country, city, location_id)
-    try:
-        cursor.execute(sql, data)
-    except (psycopg2.Error) as e:
-        raise (e)
-
-
-def insert_time(cursor, datetime, time_id):
-    day = datetime.day
-    month = datetime.month
-    year = datetime.year
-    sql = '''
-        INSERT INTO "public"."dimTime"( year,
-            month,
-            day,
-            time_id
-        ) VALUES (%s, %s, %s, %s)
-    '''
-    data = (year, month, day, time_id)
     try:
         cursor.execute(sql, data)
     except (psycopg2.Error) as e:

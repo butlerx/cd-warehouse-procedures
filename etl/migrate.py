@@ -5,7 +5,7 @@ import psycopg2.extras
 from badges import add_badges, transform_badges
 from dojos import transform_dojo
 from events import transform_event
-from measures import get_id, measure
+from measures import get_id
 from staging import stage
 from tickets import transform_ticket
 from users import transform_user
@@ -27,7 +27,6 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
         dw_cursor.execute('TRUNCATE TABLE "dimUsers" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimEvents" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimLocation" CASCADE')
-        dw_cursor.execute('TRUNCATE TABLE "dimTime" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimTickets" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "staging" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimBadges" CASCADE')
@@ -154,7 +153,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             event_id,
             session_id,
             ticket_id,
-            time_id,
+            time,
             location_id,
             id
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
@@ -175,7 +174,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
         # Queries - Measures
         dw_cursor.execute('''
         SELECT "staging".dojo_id, "staging".ticket_id, "staging".session_id,
-            "staging".event_id, "staging".user_id, "staging".time_id,
+            "staging".event_id, "staging".user_id, "staging".time,
             "staging".location_id, "staging".badge_id
         FROM "staging"
         INNER JOIN "dimDojos"
@@ -184,8 +183,6 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
         ON "staging".event_id = "dimEvents".event_id
         INNER JOIN "dimUsers"
         ON "staging".user_id = "dimUsers".user_id
-        INNER JOIN "dimTime"
-        ON "staging".time_id = "dimTime".time_id
         INNER JOIN "dimLocation" ON
         "staging".location_id = "dimLocation".location_id
         INNER JOIN "dimBadges"
@@ -198,7 +195,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 ticket_id,
                 event_id,
                 user_id,
-                time_id,
+                time,
                 location_id,
                 id,
                 badge_id
