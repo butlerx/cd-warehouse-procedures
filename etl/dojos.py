@@ -35,3 +35,10 @@ def transform_dojo(row):  # Transform / Load for Dojo Dimension
     return (dojo_id, created_at, verified_at, stage, country, city, county,
             state, continent, tao_verified, expected_attendees, verified,
             deleted)
+
+
+def link_users(row):
+    link_id = row['id']
+    dojo_id = row['dojo_id']
+    user_id = row['user_id']
+    return (link_id, dojo_id, user_id)

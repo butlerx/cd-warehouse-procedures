@@ -58,7 +58,16 @@ def main():
             dbname=dw, host=db_host, user=db_user, password=db_password)
         dw_cursor = dw_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         dw_conn.set_session(autocommit=True)
-        setup_warehouse(dw_cursor)
+
+        # Download and restore db in parallel
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(asyncio.gather(
+            setup_warehouse(dw_cursor),
+            get('dojos', args.dev),
+            get('events', args.dev),
+            get('users', args.dev),
+        ))
+        loop.close()
 
         # cp-dojos
         dojos_conn = psycopg2.connect(
@@ -75,15 +84,6 @@ def main():
             dbname=users, host=db_host, user=db_user, password=db_password)
         users_cursor = users_conn.cursor(
             cursor_factory=psycopg2.extras.DictCursor)
-
-        # Download and restore db in parallel
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.gather(
-            get('dojos', args.dev),
-            get('events', args.dev),
-            get('users', args.dev),
-        ))
-        loop.close()
 
         migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor)
         print("Databases Migrated")

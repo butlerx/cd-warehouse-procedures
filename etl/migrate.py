@@ -3,7 +3,7 @@ import sys
 import psycopg2
 import psycopg2.extras
 from badges import add_badges, transform_badges
-from dojos import transform_dojo
+from dojos import link_users, transform_dojo
 from events import transform_event
 from measures import get_id
 from staging import stage
@@ -11,12 +11,11 @@ from tickets import transform_ticket
 from users import transform_user
 
 
-def setup_warehouse(dw_cursor):
+async def setup_warehouse(dw_cursor):
     try:
         dw_cursor.execute(open("./sql/dw.sql", "r").read())
     except (psycopg2.Error) as e:
         print(e)
-        pass
 
 
 def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
@@ -27,6 +26,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
         dw_cursor.execute('TRUNCATE TABLE "dimUsers" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimEvents" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimLocation" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimUsersDojos" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimTickets" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "staging" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimBadges" CASCADE')
@@ -55,6 +55,22 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_dojo, dojos_cursor.fetchall()))
         print("Inserted all dojos")
+        sys.stdout.flush()
+
+        # Queries - Dojos
+        dojos_cursor.execute('''
+            SELECT *
+            FROM cd_usersdojos
+            WHERE deleted = 0
+        ''')
+        dw_cursor.executemany('''
+            INSERT INTO "public"."dimUsersDojos"(
+                id,
+                user_id,
+                dojo_id)
+            VALUES (%s, %s, %s)
+        ''', map(link_users, dojos_cursor.fetchall()))
+        print("Linked all dojos and users")
         sys.stdout.flush()
 
         # Queries - Events
