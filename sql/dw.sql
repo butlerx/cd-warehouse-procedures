@@ -134,7 +134,7 @@ CREATE TABLE "dimUsers" (
     continent character varying(40),
     user_id character varying(40) NOT NULL,
     mailing_list smallint DEFAULT 0 NOT NULL,
-    age integer
+    created_at timestamp without time zone
 );
 
 

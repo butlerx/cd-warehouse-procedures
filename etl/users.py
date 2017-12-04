@@ -1,6 +1,7 @@
 def transform_user(row):  # Transform / Load for User Dimension
     user_id = row['user_id']
     dob = row['dob']
+    created = row['when']
     country = row['country'] if (row['country'] is not None
                                  ) and (len(row['country'])) > 0 else 'Unknown'
     continent = row['country'] if (row['continent'] is not None) and (
@@ -27,4 +28,4 @@ def transform_user(row):  # Transform / Load for User Dimension
         roles = roles[0] if len(roles) > 0 else 'Unknown'
 
     return (user_id, dob, country, continent, city, gender, user_type, roles,
-            mailing_list)
+            mailing_list, created)
