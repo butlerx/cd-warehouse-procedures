@@ -217,26 +217,5 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 badge_id
             ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(get_id, ids))
-    #  dw_cursor.executemany('''
-    #  INSERT INTO "public"."factUsers"(
-    #      active_dojos,
-    #      countries_with_active_dojos,
-    #      events_in_last_30_days,
-    #      dojos_3_events_in_3_months,
-    #      total_champions,
-    #      total_mentors,
-    #      total_adults,
-    #      total_youth,
-    #      u13_male,
-    #      u13_female,
-    #      o13_male,
-    #      o13_female,
-    #      verified_dojos_since_2017,
-    #      dojos_active_login
-    #  ) VALUES(
-    #      %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    #  ''', map(measure(dojos_cursor, users_cursor, events_cursor), ids))
-    #  print("Inserted measures")
-    #  sys.stdout.flush()
     except (psycopg2.Error) as e:
         raise (e)
