@@ -9,6 +9,7 @@ def transform_event(row):  # Transform / Load for Event Dimension
     event_type = row['type']
     dojo_id = row['dojo_id']
     public = row['public']
+    is_eb = row['eventbrite_id'] is not None
     status = row['status']
 
     # For fields which zen prod dbs are storing as json

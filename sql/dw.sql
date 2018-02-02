@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS "dimEvents" (
     type character varying(40),
     dojo_id character varying(40),
     public boolean,
+    is_eb boolean,
     status character varying(40),
     CONSTRAINT "dimEvents_pkey" PRIMARY KEY (event_id)
 );

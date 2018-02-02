@@ -85,7 +85,8 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 type,
                 dojo_id,
                 public,
-                status
+                status,
+                is_eb
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_event, events_cursor.fetchall()))
