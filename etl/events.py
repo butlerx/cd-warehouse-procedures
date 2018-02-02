@@ -23,4 +23,4 @@ def transform_event(row):  # Transform / Load for Event Dimension
             city = city['nameWithHierarchy']
 
     return (event_id, recurring_type, country, city, created_at, event_type,
-            dojo_id, public, status)
+            dojo_id, public, status, is_eb)
