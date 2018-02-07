@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS "dimBadges" (
     name character varying(100),
     id character varying(40),
     user_id character varying(40),
+    issued_on timestamp,
     CONSTRAINT "dimBadges_pkey" PRIMARY KEY (badge_id)
 );
 

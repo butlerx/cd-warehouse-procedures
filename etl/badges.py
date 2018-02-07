@@ -10,8 +10,9 @@ def transform_badges(row):
         archived = element['archived']
         type = element['type']
         name = element['name']
+        issued_on = element['assertion']['issuedOn']
         badge_id = str(uuid.uuid4())
-        data = (id, archived, type, name, badge_id, user_id)
+        data = (id, archived, type, name, badge_id, user_id, issued_on)
         transformed_badges.append(data)
     return transformed_badges
 
