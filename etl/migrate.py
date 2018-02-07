@@ -148,8 +148,9 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                     type,
                     name,
                     badge_id,
-                    user_id
-                ) VALUES (%s, %s, %s, %s, %s, %s)
+                    user_id,
+                    issued_on
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
             ''', transform_badges(row))
         print('Inserted badges')
         sys.stdout.flush()
