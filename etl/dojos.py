@@ -32,4 +32,5 @@ def link_users(row):
     link_id = row['id']
     dojo_id = row['dojo_id']
     user_id = row['user_id']
-    return (link_id, dojo_id, user_id)
+    user_type = row['user_type']
+    return (link_id, dojo_id, user_id, user_type)

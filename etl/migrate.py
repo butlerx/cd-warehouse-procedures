@@ -59,7 +59,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
 
         # Queries - Dojos
         dojos_cursor.execute('''
-            SELECT *
+            SELECT id, user_id, dojo_id, unnest(user_types) as user_type
             FROM cd_usersdojos
             WHERE deleted = 0
         ''')
@@ -67,8 +67,9 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             INSERT INTO "public"."dimUsersDojos"(
                 id,
                 user_id,
-                dojo_id)
-            VALUES (%s, %s, %s)
+                dojo_id,
+                user_type)
+            VALUES (%s, %s, %s, %s)
         ''', map(link_users, dojos_cursor.fetchall()))
         print("Linked all dojos and users")
         sys.stdout.flush()
