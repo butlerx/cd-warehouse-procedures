@@ -113,8 +113,7 @@ CREATE TABLE IF NOT EXISTS "dimUsersDojos" (
   id character varying NOT NULL,
   user_id character varying,
   dojo_id character varying,
-  user_type character varying,
-  CONSTRAINT "PK_dimUsersDojos" PRIMARY KEY (id)
+  user_type character varying
 );
 
 CREATE INDEX "FKI_factUsers_dimBadges" ON "factUsers" USING btree (badge_id);
