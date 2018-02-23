@@ -35,7 +35,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
         dojos_cursor.execute('''
             SELECT *
             FROM cd_dojos
-            WHERE verified = 1 and deleted = 0 and stage != 4
+            WHERE verified = 1 and deleted = 0
         ''')
         dw_cursor.executemany('''
             INSERT INTO "public"."dimDojos"(
