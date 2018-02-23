@@ -21,11 +21,13 @@ def transform_dojo(row):  # Transform / Load for Dojo Dimension
         row['expected_attendees'] is
         not None) else 0  # Maybe something other than 0????
     verified = row['verified']
+    inactive = row['stage'] == 4
+    inactive_at = row['inactive_at']
     deleted = row['deleted']
 
     return (dojo_id, created_at, verified_at, stage, country, city, county,
             state, continent, tao_verified, expected_attendees, verified,
-            deleted)
+            deleted, inactive, inactive_at)
 
 
 def link_users(row):

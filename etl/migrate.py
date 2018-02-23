@@ -33,8 +33,12 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
 
         # Queries - Dojos
         dojos_cursor.execute('''
-            SELECT *
-            FROM cd_dojos
+            SELECT * FROM cd_dojos 
+            LEFT JOIN (
+                SELECT dojo_id, max(updated_at) as inactive_at 
+                FROM audit.dojo_stage 
+                WHERE stage = 4 GROUP BY dojo_id)
+            as q ON q.dojo_id = cd_dojos.id
             WHERE verified = 1 and deleted = 0
         ''')
         dw_cursor.executemany('''
@@ -51,8 +55,10 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 tao_verified,
                 expected_attendees,
                 verified,
-                deleted)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                deleted,
+                inactive,
+                inactive_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_dojo, dojos_cursor.fetchall()))
         print("Inserted all dojos")
         sys.stdout.flush()

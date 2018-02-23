@@ -35,8 +35,10 @@ CREATE TABLE IF NOT EXISTS "dimDojos" (
     tao_verified character varying(7),
     expected_attendees smallint,
     verified smallint,
-    deleted smallint,
     verified_at timestamp with time zone,
+    deleted smallint,
+    inactive smallint,
+    inactive_at timestamp with time zone,
     county character varying(40),
     CONSTRAINT "PK_dimDojos" PRIMARY KEY (id)
 );
