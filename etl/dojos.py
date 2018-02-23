@@ -21,7 +21,7 @@ def transform_dojo(row):  # Transform / Load for Dojo Dimension
         row['expected_attendees'] is
         not None) else 0  # Maybe something other than 0????
     verified = row['verified']
-    inactive = row['stage'] == 4
+    inactive = 1 if (row['stage'] == 4) else 0
     inactive_at = row['inactive_at']
     deleted = row['deleted']
 
