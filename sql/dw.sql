@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS "dimBadges" (
 
 CREATE TABLE IF NOT EXISTS "dimDojos" (
     id character varying(40) NOT NULL,
-    created timestamp without time zone,
+    created timestamp with time zone,
     stage smallint,
     country character varying(40),
     city character varying(100),
