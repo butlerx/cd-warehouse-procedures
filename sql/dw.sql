@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS "dimDojos" (
     city character varying(100),
     state character varying(40),
     continent character varying(40),
+    county character varying(40),
     tao_verified character varying(7),
     expected_attendees smallint,
     verified smallint,
@@ -39,7 +40,7 @@ CREATE TABLE IF NOT EXISTS "dimDojos" (
     deleted smallint,
     inactive smallint,
     inactive_at timestamp with time zone,
-    county character varying(40),
+    is_eb smallint,
     CONSTRAINT "PK_dimDojos" PRIMARY KEY (id)
 );
 

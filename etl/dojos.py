@@ -23,11 +23,12 @@ def transform_dojo(row):  # Transform / Load for Dojo Dimension
     verified = row['verified']
     inactive = 1 if (row['stage'] == 4) else 0
     inactive_at = row['inactive_at']
+    is_eb = 1 if row['eventbrite_token'] and row['eventbrite_wh_id'] else 0
     deleted = row['deleted']
 
     return (dojo_id, created_at, verified_at, stage, country, city, county,
             state, continent, tao_verified, expected_attendees, verified,
-            deleted, inactive, inactive_at)
+            deleted, inactive, inactive_at, is_eb)
 
 
 def link_users(row):
