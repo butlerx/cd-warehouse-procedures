@@ -112,14 +112,13 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 user_id,
                 dob,
                 country,
-                continent,
                 city,
                 gender,
                 user_type,
                 roles,
                 mailing_list,
                 created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_user, users_cursor.fetchall()))
         print("Inserted all users")
         sys.stdout.flush()

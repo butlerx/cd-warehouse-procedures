@@ -4,8 +4,6 @@ def transform_user(row):  # Transform / Load for User Dimension
     created = row['when']
     country = row['country'] if (row['country'] is not None
                                  ) and (len(row['country'])) > 0 else 'Unknown'
-    continent = row['country'] if (row['continent'] is not None) and (
-        len(row['continent'])) > 0 else 'Unknown'
     city = row['city'] if (row['city'] is
                            not None) and (len(row['city'])) > 0 else 'Unknown'
     gender = row['gender'] if (
@@ -18,14 +16,11 @@ def transform_user(row):  # Transform / Load for User Dimension
     if country is not 'Unknown':
         country = country['countryName']
 
-    if continent is not 'Unknown':
-        continent = continent['continent']
-
     if city is not 'Unknown':
         city = city['nameWithHierarchy']
 
     if roles:
         roles = roles[0] if len(roles) > 0 else 'Unknown'
 
-    return (user_id, dob, country, continent, city, gender, user_type, roles,
+    return (user_id, dob, country, city, gender, user_type, roles,
             mailing_list, created)

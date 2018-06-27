@@ -80,7 +80,6 @@ CREATE TABLE IF NOT EXISTS "dimUsers" (
     gender character varying(11),
     user_type character varying(40),
     roles character varying(40),
-    continent character varying(40),
     user_id character varying(40) NOT NULL,
     mailing_list smallint DEFAULT 0 NOT NULL,
     created_at timestamp without time zone,
