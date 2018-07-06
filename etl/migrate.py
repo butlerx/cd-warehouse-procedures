@@ -186,31 +186,30 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             created_at, updated_at, completed_at
             FROM cd_dojoleads ORDER BY completed_at desc
         ''')
-        for row in dojos_cursor.fetchall():
-            dw_cursor.executemany('''
-                INSERT INTO "public"."dimDojoLeads"(
-                    id,
-                    user_id,
-                    confidence_coding,
-                    confidence_mentoring,
-                    venue_type,
-                    alternative_venue_type,
-                    referer,
-                    alternative_referer,
-                    has_mentors,
-                    mentor_youth_workers,
-                    mentor_parents,
-                    mentor_it_professionals,
-                    mentor_venue_staff,
-                    mentor_students,
-                    mentor_teachers,
-                    mentor_youth_u18,
-                    mentor_other,
-                    created_at,
-                    updated_at,
-                    completed_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', transform_lead(row))
+        dw_cursor.executemany('''
+            INSERT INTO "public"."dimDojoLeads"(
+                id,
+                user_id,
+                confidence_coding,
+                confidence_mentoring,
+                venue_type,
+                alternative_venue_type,
+                referer,
+                alternative_referer,
+                has_mentors,
+                mentor_youth_workers,
+                mentor_parents,
+                mentor_it_professionals,
+                mentor_venue_staff,
+                mentor_students,
+                mentor_teachers,
+                mentor_youth_u18,
+                mentor_other,
+                created_at,
+                updated_at,
+                completed_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ''', map(transform_lead, dojos_cursor.fetchall()))
         print('Inserted leads')
         sys.stdout.flush()
 
