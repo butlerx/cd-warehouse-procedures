@@ -8,7 +8,7 @@ def transform_lead(row):  # Transform / Load for Lead Dimension
         row['alternative_venue_type'],
         row['referer'],
         row['alternative_referer'],
-        True if (row['has_mentors'] == "exists") else False if (row['has_mentors'] == "solo") else None,
+        True if (row['has_mentors'] == "exists") else False, # if (row['has_mentors'] == "solo") else None,
         bool(row['mentor_youth_workers']),
         bool(row['mentor_parents']),
         bool(row['mentor_it_professionals']),
