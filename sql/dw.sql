@@ -44,8 +44,9 @@ CREATE TABLE IF NOT EXISTS "dimDojoLeads" (
     mentor_other character varying(80),
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    completed_at timestamp without time zone,
+    completed_at timestamp without time zone
 );
+
 CREATE TABLE IF NOT EXISTS "dimDojos" (
     id character varying(40) NOT NULL,
     created timestamp with time zone,
