@@ -8,6 +8,7 @@ from events import transform_event
 from measures import get_id
 from staging import stage
 from tickets import transform_ticket
+from leads import transform_lead 
 from users import transform_user
 
 
@@ -23,6 +24,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
         # Truncate all tables before fresh insert from sources
         dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimDojos" CASCADE')
+        dw_cursor.execute('TRUNCATE TABLE "dimDojoLeads" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimUsers" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimEvents" CASCADE')
         dw_cursor.execute('TRUNCATE TABLE "dimLocation" CASCADE')
@@ -58,8 +60,9 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 deleted,
                 inactive,
                 inactive_at,
-                is_eb)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                is_eb,
+                lead_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_dojo, dojos_cursor.fetchall()))
         print("Inserted all dojos")
         sys.stdout.flush()
@@ -160,6 +163,55 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s)
             ''', transform_badges(row))
         print('Inserted badges')
+        sys.stdout.flush()
+        
+        # Queries - Leads 
+        dojos_cursor.execute('''
+        SELECT id, user_id,
+            application->'champion'->>'confidentCoding' as "confidence_coding",
+            application->'champion'->>'confidentMentoring' as "confidence_mentoring",
+            application->'venue'->>'type' as "venue_type", 
+            application->'venue'->>'alternativeType' as "alternative_venue_type",
+            application->'champion'->>'reference' as "referer",
+            application->'champion'->>'alternativeReference' as "alternative_referer",
+            application->'team'->>'status' as "has_mentors",
+            application->'team'->'src'->>'community' as "mentor_youth_workers",
+            application->'team'->'src'->>'parents' as "mentor_parents",
+            application->'team'->'src'->>'pro' as "mentor_it_professionals",
+            application->'team'->'src'->>'staff' as "mentor_venue_staff",
+            application->'team'->'src'->>'students' as "mentor_students",
+            application->'team'->'src'->>'teachers' as "mentor_teachers",
+            application->'team'->'src'->>'youth' as "mentor_youth_u18",
+            application->'team'->'alternativeSrc' as "mentor_other",
+            created_at, updated_at, completed_at
+            FROM cd_dojoleads ORDER BY completed_at desc
+        ''')
+        for row in dojos_cursor.fetchall():
+            dw_cursor.executemany('''
+                INSERT INTO "public"."dimDojoLeads"(
+                    id,
+                    user_id,
+                    confidence_coding,
+                    confidence_mentoring,
+                    venue_type,
+                    alternative_venue_type,
+                    referer,
+                    alternative_referer,
+                    has_mentors,
+                    mentor_youth_workers,
+                    mentor_parents,
+                    mentor_it_professionals,
+                    mentor_venue_staff,
+                    mentor_students,
+                    mentor_teachers,
+                    mentor_youth_u18,
+                    mentor_other,
+                    created_at,
+                    updated_at,
+                    completed_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', transform_lead(row))
+        print('Inserted leads')
         sys.stdout.flush()
 
         # Queries - Staging

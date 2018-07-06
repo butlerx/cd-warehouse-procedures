@@ -4,7 +4,7 @@ SET idle_in_transaction_session_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
-SET client_min_messages = warning;
+SET client_min_messages = ERROR;
 SET row_security = off;
 
 SET search_path = public, pg_catalog;
@@ -24,6 +24,28 @@ CREATE TABLE IF NOT EXISTS "dimBadges" (
     CONSTRAINT "dimBadges_pkey" PRIMARY KEY (badge_id)
 );
 
+CREATE TABLE IF NOT EXISTS "dimDojoLeads" (
+    id character varying(40) NOT NULL,
+    user_id character varying(40),
+    confidence_mentoring smallint,
+    confidence_coding smallint,
+    venue_type character varying(40),
+    alternative_venue_type character varying(80),
+    referer character varying(40),
+    alternative_referer character varying(80),
+    has_mentors boolean,
+    mentor_youth_workers boolean,
+    mentor_it_professionals boolean,
+    mentor_venue_staff boolean,
+    mentor_parents boolean,
+    mentor_teachers boolean,
+    mentor_students boolean,
+    mentor_youth_u18 boolean,
+    mentor_other character varying(80),
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
+    completed_at timestamp without time zone,
+);
 CREATE TABLE IF NOT EXISTS "dimDojos" (
     id character varying(40) NOT NULL,
     created timestamp with time zone,
@@ -41,6 +63,7 @@ CREATE TABLE IF NOT EXISTS "dimDojos" (
     inactive smallint,
     inactive_at timestamp with time zone,
     is_eb smallint,
+    lead_id character varying(40),
     CONSTRAINT "PK_dimDojos" PRIMARY KEY (id)
 );
 
