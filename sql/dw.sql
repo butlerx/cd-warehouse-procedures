@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS "dimUsers" (
     dob timestamp without time zone,
     country character varying(50),
     city character varying(100),
-    gender character varying(11),
+    gender character varying(20),
     user_type character varying(40),
     roles character varying(40),
     user_id character varying(40) NOT NULL,
