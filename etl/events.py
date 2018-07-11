@@ -11,6 +11,7 @@ def transform_event(row):  # Transform / Load for Event Dimension
     public = row['public']
     is_eb = row['eventbrite_id'] is not None
     status = row['status']
+    start_time = row['start_time']
 
     # For fields which zen prod dbs are storing as json
     if country is not 'Unknown':
@@ -23,4 +24,4 @@ def transform_event(row):  # Transform / Load for Event Dimension
             city = city['nameWithHierarchy']
 
     return (event_id, recurring_type, country, city, created_at, event_type,
-            dojo_id, public, status, is_eb)
+            dojo_id, public, status, is_eb, start_time)

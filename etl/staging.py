@@ -12,6 +12,7 @@ def stage(cursor):
         event_id = row['event_id']
         session_id = row['session_id']
         ticket_id = row['ticket_id']
+        checked_in = False if row['attendances'] is not else True
         time = None
         location_id = str(uuid.uuid4())
         id = row['id']
