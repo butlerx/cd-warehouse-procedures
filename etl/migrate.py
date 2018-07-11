@@ -85,7 +85,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
         sys.stdout.flush()
 
         # Queries - Events
-        events_cursor.execute('SELECT cd_events.*, d.date->>\'startTime\' as start_time FROM cd_events LEFT OUTER JOIN (SELECT id, unnest(dates) as date FROM cd_events) d ON d.id = cd_events.id')
+        events_cursor.execute('SELECT cd_events.*, CASE (d.date->>\'startTime\') WHEN \'Invalid date\' THEN NULL ELSE (d.date->>\'startTime\')::timestamp END start_time FROM cd_events LEFT OUTER JOIN (SELECT id, unnest(dates) as date FROM cd_events) d ON d.id = cd_events.id')
         dw_cursor.executemany('''
             INSERT INTO "public"."dimEvents"(
                 event_id,
