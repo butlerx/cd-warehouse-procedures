@@ -39,8 +39,8 @@ def stage(cursor):
 
         insert_location(cursor, country, city, location_id)
 
-        data = (user_id, dojo_id, event_id, session_id, ticket_id, time,
-                location_id, id, checked_in)
+        data = (user_id, dojo_id, event_id, session_id, ticket_id, checked_in, time,
+                location_id, id)
         return data
 
     return calculate
