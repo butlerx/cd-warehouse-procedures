@@ -11,5 +11,6 @@ def get_id(args):
     location_id = args['location_id']
     id = str(uuid.uuid4())
     badge_id = args['badge_id']
+    checked_in = args['checked_in']
     return (dojo_id, ticket_id, event_id, user_id, time, location_id, id,
-            badge_id)
+            badge_id, checked_in)
