@@ -166,9 +166,6 @@ ALTER TABLE ONLY "factUsers"
     ADD CONSTRAINT "FK_factUsers_dimDojos" FOREIGN KEY (dojo_id) REFERENCES "dimDojos"(id);
 
 ALTER TABLE ONLY "factUsers"
-    ADD CONSTRAINT "FK_factUsers_dimEvents" FOREIGN KEY (event_id) REFERENCES "dimEvents"(event_id);
-
-ALTER TABLE ONLY "factUsers"
     ADD CONSTRAINT "FK_factUsers_dimLocation" FOREIGN KEY (location_id) REFERENCES "dimLocation"(location_id);
 
 ALTER TABLE ONLY "factUsers"
