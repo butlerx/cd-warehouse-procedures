@@ -219,7 +219,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
         SELECT cd_applications.id, cd_applications.ticket_id,
             cd_applications.session_id, cd_applications.event_id,
             cd_applications.dojo_id, cd_applications.user_id,
-            cd_applications.attendances,
+            cd_applications.attendance,
             dates, country, city
         FROM cd_applications
         INNER JOIN cd_events ON cd_applications.event_id = cd_events.id
