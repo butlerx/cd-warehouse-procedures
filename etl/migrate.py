@@ -256,6 +256,17 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             "staging".event_id, "staging".user_id, "staging".time,
             "staging".location_id, "staging".badge_id, "staging".checked_in
         FROM "staging"
+         INNER JOIN "dimDojos"		
+          ON "staging".dojo_id = "dimDojos".id		
+        INNER JOIN "dimUsers"		
+          ON "staging".user_id = "dimUsers".user_id		
+        INNER JOIN "dimLocation" ON		
+          "staging".location_id = "dimLocation".location_id		
+        INNER JOIN "dimBadges"		
+          ON "staging".badge_id = "dimBadges".badge_id
+         GROUP BY "staging".event_id, "staging".dojo_id, "staging".ticket_id, "staging".session_id,
+            "staging".event_id, "staging".user_id, "staging".time,
+            "staging".location_id, "staging".badge_id, "staging".checked_in
         ''')
         ids = dw_cursor.fetchall()
         dw_cursor.executemany('''
