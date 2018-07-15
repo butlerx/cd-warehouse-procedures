@@ -268,7 +268,7 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 location_id,
                 id,
                 badge_id,
-                checked_in,
+                checked_in
             ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(get_id, ids))
     except (psycopg2.Error) as e:
