@@ -1,4 +1,6 @@
+"""function realted to staging"""
 import uuid
+from typing import Dict, Tuple
 
 import psycopg2
 import psycopg2.extras
@@ -6,56 +8,37 @@ from isodate import parse_datetime
 
 
 def stage(cursor):
-    def calculate(row):
-        user_id = row['user_id']
-        dojo_id = row['dojo_id']
-        event_id = row['event_id']
-        session_id = row['session_id']
-        ticket_id = row['ticket_id']
-        checked_in = False if not row['attendance'] else True
-        time = None
+    """returns function for staging data"""
+
+    def _calculate(row: Dict) -> Tuple:
+        attendance = False if not row['attendance'] else True
+        time = parse_datetime(row['dates'][0]['startTime']) if row['dates'][0][
+            'startTime'] is not None else None
+        location_id = insert_location(row['city'], row['country'])
+        return (row['user_id'], row['dojo_id'], row['event_id'],
+                row['session_id'], row['ticket_id'], attendance, time,
+                location_id, row['id'])
+
+    def insert_location(city: Dict, country: Dict) -> str:
+        """insert location in to db"""
         location_id = str(uuid.uuid4())
-        id = row['id']
-        start_date = row['dates']
-
-        if start_date[0]['startTime'] is not None:
-            start_date = parse_datetime(start_date[0]['startTime'])
-            time = start_date
-
-        country = row['country'] if (row['country'] is not None) and (
-            len(row['country'])) > 0 else 'Unknown'
-        city = row['city'] if (
-            row['city'] is not None) and (len(row['city'])) > 0 else 'Unknown'
 
         # For fields which zen prod dbs are storing as json
-        if country is not 'Unknown':
-            country = country['countryName']
+        country = country if (country is not None) and country else None
+        country = country['countryName'] if country is not None else 'Unknown'
 
-        if city is not 'Unknown':
-            if 'toponymName' in city:
-                city = city['toponymName']
-            else:
-                city = city['nameWithHierarchy']
+        city = city if (city is not None) and city else None
+        city = 'Unknown' if city is None else city[
+            'toponymName'] if 'toponymName' in city else city[
+                'nameWithHierarchy']
 
-        insert_location(cursor, country, city, location_id)
+        cursor.execute('''
+            INSERT INTO "public"."dimLocation"(
+                country,
+                city,
+                location_id
+            ) VALUES (%s, %s, %s)
+        ''', (country, city, location_id))
+        return location_id
 
-        data = (user_id, dojo_id, event_id, session_id, ticket_id, checked_in, time,
-                location_id, id)
-        return data
-
-    return calculate
-
-
-def insert_location(cursor, country, city, location_id):
-    sql = '''
-        INSERT INTO "public"."dimLocation"(
-            country,
-            city,
-            location_id
-        ) VALUES (%s, %s, %s)
-    '''
-    data = (country, city, location_id)
-    try:
-        cursor.execute(sql, data)
-    except (psycopg2.Error) as e:
-        raise (e)
+    return _calculate

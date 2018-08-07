@@ -1,4 +1,5 @@
 #! /usr/bin/env python3
+"""main function"""
 
 from __future__ import print_function
 
@@ -6,105 +7,86 @@ import argparse
 import asyncio
 import json
 import sys
+from typing import Dict
 
 import psycopg2
 import psycopg2.extras
-from clean_up import clean_databases, reset_databases
-from migrate import migrate_db, setup_warehouse
+from clean_up import Cleaner, Connection, Datebases
+from migrate import Convertor, setup_warehouse
 from restore import restore_db
-from s3 import download
-
-with open('./config/config.json') as data:
-    data = json.load(data)
-
-db_host = data['postgres']['host']
-db_password = data['postgres']['password']
-db_user = data['postgres']['user']
-dojos = data['databases']['dojos']
-dw = data['databases']['dw']
-events = data['databases']['events']
-users = data['databases']['users']
+from s3 import AWS, download
 
 
-async def get(name, dev):
-    print('Restoring db', name)
-    sys.stdout.flush()
-    if (not dev):
-        download(name)
-    restore_db(db_host, data['databases'][name], db_user, db_password, name)
+class Warehouse():
+    """main class for parseing config and running migration"""
+
+    def __init__(self, config: Dict) -> None:
+        self.con = Connection(
+            host=config['postgres']['host'],
+            password=config['postgres']['password'],
+            user=config['postgres']['user'])
+        self.databases = Datebases(
+            warehouse=config['databases']['dw'],
+            dojos=config['databases']['dojos'],
+            events=config['databases']['events'],
+            users=config['databases']['users'])
+        self.aws = AWS(bucket=config['s3']['bucket'],
+                       access_key=config['s3']['access'],
+                       secret_key=config['s3']['secret'])
+        self.cleaner = Cleaner(self.con)
+
+    async def get(self, name: str, database: str, dev: bool) -> None:
+        print('Restoring db', name)
+        if not dev:
+            download(name, self.aws)
+        restore_db(self.con, database, name)
+
+    def main(self, dev: bool=False):
+        """main function"""
+        try:
+            # Postgres
+            self.cleaner.reset_databases(self.databases)
+            print("Databases Reset")
+
+            convertor = Convertor(self.databases, self.con)
+
+            # Download and restore db in parallel
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(
+                asyncio.gather(
+                    convertor.setup_warehouse(),
+                    self.get('dojos', self.databases.dojos, dev),
+                    self.get('events', self.databases.events, dev),
+                    self.get('users', self.databases.users, dev), ))
+            loop.close()
+
+            convertor.connect()
+            convertor.migrate_db()
+            print("Databases Migrated")
+            convertor.disconnect()
+            self._exit(0)
+        except psycopg2.Error as err:
+            print(err)
+            self._exit(1)
+
+    def _exit(self, exit_code: int):
+        self.cleaner.close(self.databases.dojos, self.databases.events,
+                           self.databases.users)
+        print("Removed {}, {} and {}".format(
+            self.databases.dojos, self.databases.events, self.databases.users))
+        sys.exit(exit_code)
 
 
-def main():
+def __cli():
     parser = argparse.ArgumentParser(
         description='migrate production databases backups to datawarehouse')
-    parser.add_argument('--dev', action='store_true',
-                        help='dev mode to use local backups')
+    parser.add_argument(
+        '--dev', action='store_true', help='dev mode to use local backups')
     args = parser.parse_args()
-    try:
-        # Postgres
-        dw_setup = psycopg2.connect(
-            dbname='postgres',
-            host=db_host,
-            user=db_user,
-            password=db_password)
-        dw_setup.set_session(autocommit=True)
-        cursor = dw_setup.cursor()
-        reset_databases(cursor, dojos, dw, events, users)
-        print("Databases Reset")
-        sys.stdout.flush()
-
-        # cdDataWarehouse
-        dw_conn = psycopg2.connect(
-            dbname=dw, host=db_host, user=db_user, password=db_password)
-        dw_cursor = dw_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        dw_conn.set_session(autocommit=True)
-
-        # Download and restore db in parallel
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.gather(
-            setup_warehouse(dw_cursor),
-            get('dojos', args.dev),
-            get('events', args.dev),
-            get('users', args.dev),
-        ))
-        loop.close()
-
-        # cp-dojos
-        dojos_conn = psycopg2.connect(
-            dbname=dojos, host=db_host, user=db_user, password=db_password)
-        dojos_cursor = dojos_conn.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-        # cp-events
-        events_conn = psycopg2.connect(
-            dbname=events, host=db_host, user=db_user, password=db_password)
-        events_cursor = events_conn.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-        # cp-users
-        users_conn = psycopg2.connect(
-            dbname=users, host=db_host, user=db_user, password=db_password)
-        users_cursor = users_conn.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-
-        migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor)
-        print("Databases Migrated")
-        sys.stdout.flush()
-
-        # Close Database connections and delete the dev databases
-        dw_cursor.connection.close()
-        users_cursor.connection.close()
-        events_cursor.connection.close()
-        dojos_cursor.connection.close()
-        clean_databases(cursor, dojos, events, users)
-        print("Removed ", dojos, events, users)
-        cursor.connection.close()
-        sys.exit(0)
-    except (psycopg2.Error) as e:
-        print(e)
-        clean_databases(cursor, dojos, events, users)
-        print("Removed ", dojos, events, users)
-        cursor.close
-        sys.exit(1)
+    with open('./config/config.json') as data:
+        warehouse = Warehouse(json.load(data))
+        warehouse.main(args.dev)
 
 
 if __name__ == '__main__':
-    main()
+    cli()

@@ -1,27 +1,22 @@
+"""Badge related transformations"""
 import uuid
+from typing import Dict, List, Tuple
 
 
-def transform_badges(row):
+def transform_badges(row: Dict) -> List[Tuple]:
+    """Transform Original badge object to tuple for insertion"""
     user_id = row['user_id']
     badges = row['badges']
-    transformed_badges = []
-    for element in badges:
-        id = element['id']
-        archived = element['archived']
-        type = element['type']
-        name = element['name']
+
+    def _transform(element: Dict) -> Tuple:
         issued_on = element.get('assertion', {}).get('issuedOn', None)
         badge_id = str(uuid.uuid4())
-        data = (id, archived, type, name, badge_id, user_id, issued_on)
-        transformed_badges.append(data)
-    return transformed_badges
+        return (element['id'], element['archived'], element['type'],
+                element['name'], badge_id, user_id, issued_on)
+
+    return list(map(_transform, badges))
 
 
-def add_badges(rows):
-    badges = []
-    for row in rows:
-        user_id = row['user_id']
-        badge_id = row['badge_id']
-        data = (badge_id, user_id)
-        badges.append(data)
-    return badges
+def add_badges(rows: List) -> List[Tuple]:
+    """add badge to db"""
+    return list(map(lambda row: (row['badge_id'], row['user_id']), rows))

@@ -1,7 +1,8 @@
-def transform_ticket(row):
-    ticket_id = row['ticket_id']
-    ticket_type = row['type']
-    quantity = row['quantity']
-    deleted = row['deleted']
+"""functions related to tickets"""
 
-    return (ticket_id, ticket_type, quantity, deleted)
+from typing import Dict, Tuple
+
+
+def transform_ticket(row: Dict) -> Tuple:
+    """transform ticket for warehouse"""
+    return (row['ticket_id'], row['type'], row['quantity'], row['deleted'])

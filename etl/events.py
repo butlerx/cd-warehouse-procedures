@@ -1,27 +1,21 @@
-def transform_event(row):  # Transform / Load for Event Dimension
-    event_id = row['id']
-    recurring_type = row['recurring_type']
-    country = row['country'] if (row['country'] is not None
-                                 ) and (len(row['country'])) > 0 else 'Unknown'
-    city = row['city'] if (row['city'] is
-                           not None) and (len(row['city'])) > 0 else 'Unknown'
-    created_at = row['created_at']
-    event_type = row['type']
-    dojo_id = row['dojo_id']
-    public = row['public']
-    is_eb = row['eventbrite_id'] is not None
-    status = row['status']
-    start_time = row['start_time']
+"""function related to events"""
 
+from typing import Dict, Tuple
+
+
+def transform_event(row: Dict) -> Tuple:
+    """ Transform / Load for Event Dimension"""
     # For fields which zen prod dbs are storing as json
-    if country is not 'Unknown':
-        country = country['countryName']
+    country = row['country'] if (
+        row['country'] is not None) and row['country'] else None
+    country = country['countryName'] if country is not None else 'Unknown'
 
-    if city is not 'Unknown':
-        if 'toponymName' in city:
-            city = city['toponymName']
-        else:
-            city = city['nameWithHierarchy']
+    is_eb = row['eventbrite_id'] is not None
 
-    return (event_id, recurring_type, country, city, created_at, event_type,
-            dojo_id, public, status, is_eb, start_time)
+    city = row['city'] if (row['city'] is not None) and row['city'] else None
+    city = 'Unkown' if city is None else city[
+        'toponymName'] if 'toponymName' in city else city['nameWithHierarchy']
+
+    return (row['id'], row['recurring_type'], country, city, row['created_at'],
+            row['type'], row['dojo_id'], row['public'], row['status'], is_eb,
+            row['start_time'])

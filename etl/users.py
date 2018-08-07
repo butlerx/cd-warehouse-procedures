@@ -1,26 +1,22 @@
-def transform_user(row):  # Transform / Load for User Dimension
-    user_id = row['user_id']
-    dob = row['dob']
-    created = row['when']
-    country = row['country'] if (row['country'] is not None
-                                 ) and (len(row['country'])) > 0 else 'Unknown'
-    city = row['city'] if (row['city'] is
-                           not None) and (len(row['city'])) > 0 else 'Unknown'
-    gender = row['gender'] if (
-        row['gender'] is not None) and (len(row['gender'])) > 0 else 'Unknown'
-    user_type = row['user_type']
-    roles = row['roles']
-    mailing_list = row['mailing_list']
+"""for functions realted too users"""
+from typing import Dict, Tuple
+
+
+def transform_user(row: Dict) -> Tuple:
+    """Transform / Load for User Dimension"""
 
     # For fields which zen prod dbs are storing as json
-    if country is not 'Unknown':
-        country = country['countryName']
+    country = row['country'] if (
+        row['country'] is not None) and row['country'] else None
+    country = country['countryName'] if country is not None else 'Unknown'
 
-    if city is not 'Unknown':
-        city = city['nameWithHierarchy']
+    city = row['city'] if (row['city'] is not None) and row['city'] else None
+    city = city['nameWithHierarchy'] if city is not None else 'Unknown'
 
-    if roles:
-        roles = roles[0] if len(roles) > 0 else 'Unknown'
+    gender = row['gender'] if (
+        row['gender'] is not None) and row['gender'] else 'Unknown'
 
-    return (user_id, dob, country, city, gender, user_type, roles,
-            mailing_list, created)
+    roles = row['roles'][0] if row['roles'] else 'Unknown'
+
+    return (row['user_id'], row['dob'], country, city, gender,
+            row['user_type'], roles, row['mailing_list'], row['when'])

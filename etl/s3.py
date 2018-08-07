@@ -1,30 +1,29 @@
-import json
+"""interacting with s3"""
+from collections import namedtuple
 
 import botocore
+
 from boto3 import Session
 
-with open('./config/config.json') as data:
-    data = json.load(data)
-
-aws_bucket = data['s3']['bucket']
-aws_access_key = data['s3']['access']
-aws_secret_key = data['s3']['secret']
+AWS = namedtuple('AWS', 'bucket access_key secret_key')
 
 
-def download(db):
+def download(database: str, aws: AWS) -> None:
+    """Download database from backup from s3"""
     session = Session(
-        aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_key)
-    s3 = session.resource('s3')
-    bucket = s3.Bucket(aws_bucket)
-    sBackups = bucket.objects.filter(Prefix='zen' + db)
+        aws_access_key_id=aws.access_key, aws_secret_access_key=aws.secret_key)
+    aws_s3 = session.resource('s3')
+    bucket = aws_s3.Bucket(aws.bucket)
+    s3_backups = bucket.objects.filter(Prefix='zen{}'.format(database))
     obj = sorted(
-        sBackups, key=lambda s3_object: s3_object.last_modified,
+        s3_backups,
+        key=lambda s3_object: s3_object.last_modified,
         reverse=True)[0]
     try:
-        print('Restoring from %s' % obj.key)
-        bucket.download_file(obj.key, '/db/' + db + '.tar.gz')
-    except botocore.exceptions.ClientError as e:
-        if e.response['Error']['Code'] == "404":
-            print("The object does not exist.")
+        print('Restoring from {}'.format(obj.key))
+        bucket.download_file(obj.key, '/db/{}.tar.gz'.format(database))
+    except botocore.exceptions.ClientError as err:
+        if err.response['Error']['Code'] == "404":
+            pass
         else:
             raise
