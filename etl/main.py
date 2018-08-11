@@ -1,4 +1,4 @@
-#! /sr/bin/env python3
+#! /usr/bin/env python3
 """main function"""
 
 from argparse import ArgumentParser
@@ -15,41 +15,46 @@ from restore import restore_db
 from s3 import download
 
 
-class Warehouse():
+class Warehouse:
     """main class for parseing config and running migration"""
 
     def __init__(self, config: Dict) -> None:
         self.con = Connection(
-            host=config['postgres']['host'],
-            password=config['postgres']['password'],
-            user=config['postgres']['user'])
+            host=config["postgres"]["host"],
+            password=config["postgres"]["password"],
+            user=config["postgres"]["user"],
+        )
         self.databases = Databases(
-            warehouse=config['databases']['dw'],
-            dojos=config['databases']['dojos'],
-            events=config['databases']['events'],
-            users=config['databases']['users'])
-        self.aws = AWS(bucket=config['s3']['bucket'],
-                       access_key=config['s3']['access'],
-                       secret_key=config['s3']['secret'])
+            warehouse=config["databases"]["dw"],
+            dojos=config["databases"]["dojos"],
+            events=config["databases"]["events"],
+            users=config["databases"]["users"],
+        )
+        self.aws = AWS(
+            bucket=config["s3"]["bucket"],
+            access_key=config["s3"]["access"],
+            secret_key=config["s3"]["secret"],
+        )
         self.cleaner = Cleaner(self.con)
 
-    async def get(self, name: str, database: str, dev: bool) -> None:
+    async def get(self, name: str, database: str, path: str, dev: bool = False) -> None:
         """download if not in dev mode backups and restore from them"""
-        print('Restoring db', name)
+        print("Restoring db", name)
         if not dev:
-            download(name, self.aws)
-        restore_db(self.con, database, name)
+            download(name, self.aws, path)
+        restore_db(self.con, database, path, name)
 
-    async def main(self, dev: bool = False) -> None:
+    async def main(self, dev: bool = False, db_path: str = "./db") -> None:
         """main function"""
         try:
             await self.cleaner.reset_databases(self.databases)
             print("Databases Reset")
 
             await gather(
-                self.get('dojos', self.databases.dojos, dev),
-                self.get('events', self.databases.events, dev),
-                self.get('users', self.databases.users, dev))
+                self.get("dojos", self.databases.dojos, db_path, dev),
+                self.get("events", self.databases.events, db_path, dev),
+                self.get("users", self.databases.users, db_path, dev),
+            )
 
             convertor = Migrator(self.databases, self.con)
             await convertor.migrate_db()
@@ -61,25 +66,45 @@ class Warehouse():
             self._exit(1)
 
     def _exit(self, exit_code: int):
-        self.cleaner.close(self.databases.dojos, self.databases.events,
-                           self.databases.users)
-        print("Removed {}, {} and {}".format(
-            self.databases.dojos, self.databases.events, self.databases.users))
+        self.cleaner.close(
+            self.databases.dojos, self.databases.events, self.databases.users
+        )
+        print(
+            "Removed {}, {} and {}".format(
+                self.databases.dojos, self.databases.events, self.databases.users
+            )
+        )
         exit(exit_code)
 
 
 def __cli():
     parser = ArgumentParser(
-        description='migrate production databases backups to datawarehouse')
+        prog="etl", description="migrate production databases backups to datawarehouse"
+    )
     parser.add_argument(
-        '--dev', action='store_true', help='dev mode to use local backups')
+        "--dev", action="store_true", help="dev mode to use local backups"
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        type=str,
+        default="./config/config.json",
+        help="location of config file",
+    )
+    parser.add_argument(
+        "--db-path",
+        type=str,
+        dest="db",
+        default="./db",
+        help="Path to download db backups too",
+    )
     args = parser.parse_args()
-    with open('./config/config.json') as data:
+    with open(args.config) as data:
         warehouse = Warehouse(load(data))
         loop = get_event_loop()
-        loop.run_until_complete(warehouse.main(args.dev))
+        loop.run_until_complete(warehouse.main(dev=args.dev, db_path=args.db))
         loop.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     __cli()

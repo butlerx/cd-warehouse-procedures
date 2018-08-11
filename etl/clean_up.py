@@ -6,15 +6,13 @@ from psycopg2 import Error, connect
 from psycopg2.extras import DictCursor
 
 
-class Cleaner():
+class Cleaner:
     """class responsible for reseting all databases"""
 
     def __init__(self, con: Connection) -> None:
         dw_setup = connect(
-            dbname='postgres',
-            host=con.host,
-            user=con.user,
-            password=con.password)
+            dbname="postgres", host=con.host, user=con.user, password=con.password
+        )
         dw_setup.set_session(autocommit=True)
         self.cursor = dw_setup.cursor(cursor_factory=DictCursor)
 
@@ -34,20 +32,23 @@ class Cleaner():
         """disconnect all connections and drop database"""
         try:
             await self.disconnect(database)
-            self.cursor.execute('DROP DATABASE IF EXISTS "{0}"'.format(
-                database))
+            self.cursor.execute('DROP DATABASE IF EXISTS "{0}";'.format(database))
         except Error as err:
             print(err)
 
     async def disconnect(self, database: str) -> None:
         """kill all connects to a database"""
         try:
-            self.cursor.execute('''
-                SELECT pg_terminate_backend(pg_stat_activity.pid)
+            self.cursor.execute(
+                """SELECT
+                    pg_terminate_backend(pg_stat_activity.pid)
                 FROM pg_stat_activity
                 WHERE pg_stat_activity.datname = '{0}'
                   AND pid <> pg_backend_pid();
-                '''.format(database))
+                """.format(
+                    database
+                )
+            )
         except Error:
             pass
 
