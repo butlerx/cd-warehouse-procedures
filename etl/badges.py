@@ -1,6 +1,6 @@
 """Badge related transformations"""
-import uuid
 from typing import Dict, List, Tuple
+from uuid import uuid4
 
 
 def transform_badges(row: Dict) -> List[Tuple]:
@@ -10,7 +10,7 @@ def transform_badges(row: Dict) -> List[Tuple]:
 
     def _transform(element: Dict) -> Tuple:
         issued_on = element.get('assertion', {}).get('issuedOn', None)
-        badge_id = str(uuid.uuid4())
+        badge_id = str(uuid4())
         return (element['id'], element['archived'], element['type'],
                 element['name'], badge_id, user_id, issued_on)
 

@@ -1,88 +1,62 @@
 """reads and writes to database"""
 
-import psycopg2
-import psycopg2.extras
 from badges import add_badges, transform_badges
-from clean_up import Connection, Databases
 from dojos import link_users, transform_dojo
 from events import transform_event
 from leads import transform_lead
+from local_types import Connection, Databases
 from measures import get_id
+from psycopg2 import connect
+from psycopg2.extras import DictCursor
 from staging import stage
 from tickets import transform_ticket
 from users import transform_user
 
 
-class Convertor():
+class Migrator():
     """converts orginal dbs to warehouse"""
 
-    async def setup_warehouse(self) -> None:
-        """run dw.sql"""
-        self.dw_cursor.execute(open("./sql/dw.sql", "r").read())
-
     def __init__(self, databases: Databases, con: Connection) -> None:
-        dw_conn = psycopg2.connect(
-            dbname=databases.warehouse,
-            host=con.host,
-            user=con.user,
-            password=con.password)
-        dw_conn.set_session(autocommit=True)
-        self.dw_cursor = dw_conn.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+        self.dw_cursor = self._connect_db(databases.warehouse)
+        self.dw_cursor.execute(open("./sql/dw.sql", "r").read())
+        self.dojos_cursor = self._connect_db(databases.dojos)
+        self.events_cursor = self._connect_db(databases.events)
+        self.users_cursor = self._connect_db(databases.users)
         self.con = con
         self.databases = databases
-        self.dojos_cursor = None
-        self.users_cursor = None
-        self.events_cursor = None
 
-    def connect(self):
-        """connect to temp databases"""
-        # cp-dojos
-        dojos_conn = psycopg2.connect(
-            dbname=self.databases.dojos,
+    def _connect_db(self, database):
+        conn = connect(
+            dbname=database,
             host=self.con.host,
             user=self.con.user,
             password=self.con.password)
-        self.dojos_cursor = dojos_conn.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-        # cp-events
-        events_conn = psycopg2.connect(
-            dbname=self.databases.events,
-            host=self.con.host,
-            user=self.con.user,
-            password=self.con.password)
-        self.events_cursor = events_conn.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
-        # cp-users
-        users_conn = psycopg2.connect(
-            dbname=self.databases.users,
-            host=self.con.host,
-            user=self.con.user,
-            password=self.con.password)
-        self.users_cursor = users_conn.cursor(
-            cursor_factory=psycopg2.extras.DictCursor)
+        conn.set_session(autocommit=True)
+        return conn.cursor(
+            cursor_factory=DictCursor)
 
-    def disconnect(self) -> None:
+    async def disconnect(self) -> None:
         """disconnect from db's"""
         self.dw_cursor.connection.close()
         self.users_cursor.connection.close()
         self.events_cursor.connection.close()
         self.dojos_cursor.connection.close()
 
-    def migrate_db(self):
+    async def migrate_db(self):
         """perform db migrations"""
-        self.__truncate()
-        self.__migrate_dojos()
-        self.__migrate_events()
-        self.__migrate_users()
-        self.__migrate_tickets()
-        self.__migrate_badges()
-        self.__migrate_leads()
-        self.__stage()
-        self.__stage_badges()
-        self.__measure()
+        await self.__truncate()
+        await self.__migrate_dojos()
+        await self.__link_dojos_users()
+        await self.__migrate_events()
+        await self.__migrate_users()
+        await self.__migrate_tickets()
+        await self.__migrate_badges()
+        await self.__migrate_leads()
+        await self.__stage()
+        await self.__stage_badges()
+        await self.__measure()
 
-    def __truncate(self) -> None:
+    async def __truncate(self) -> None:
         """ Truncate all tables before fresh insert from sources"""
         self.dw_cursor.execute('TRUNCATE TABLE "factUsers" CASCADE')
         self.dw_cursor.execute('TRUNCATE TABLE "dimDojos" CASCADE')
@@ -95,7 +69,7 @@ class Convertor():
         self.dw_cursor.execute('TRUNCATE TABLE "staging" CASCADE')
         self.dw_cursor.execute('TRUNCATE TABLE "dimBadges" CASCADE')
 
-    def __migrate_dojos(self) -> None:
+    async def __migrate_dojos(self) -> None:
         # Queries - Dojos
         self.dojos_cursor.execute('''
             SELECT * FROM cd_dojos
@@ -125,10 +99,12 @@ class Convertor():
                 inactive_at,
                 is_eb,
                 lead_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_dojo, self.dojos_cursor.fetchall()))
         print("Inserted all dojos")
 
+    async def __link_dojos_users(self):
         # Queries - Dojos
         self.dojos_cursor.execute('''
             SELECT id, user_id, dojo_id, unnest(user_types) as user_type
@@ -145,7 +121,7 @@ class Convertor():
         ''', map(link_users, self.dojos_cursor.fetchall()))
         print("Linked all dojos and users")
 
-    def __migrate_events(self) -> None:
+    async def __migrate_events(self) -> None:
         # Queries - Events
         self.events_cursor.execute("""
             SELECT cd_events.*,
@@ -175,7 +151,7 @@ class Convertor():
         ''', map(transform_event, self.events_cursor.fetchall()))
         print("Inserted all events and locations")
 
-    def __migrate_users(self) -> None:
+    async def __migrate_users(self) -> None:
         # Queries - Users
         self.users_cursor.execute('''
             SELECT *
@@ -197,7 +173,7 @@ class Convertor():
         ''', map(transform_user, self.users_cursor.fetchall()))
         print("Inserted all users")
 
-    def __migrate_tickets(self) -> None:
+    async def __migrate_tickets(self) -> None:
         # Queries - Tickets
         self.events_cursor.execute('''
             SELECT status, cd_tickets.id AS ticket_id, type, quantity, deleted
@@ -214,13 +190,14 @@ class Convertor():
         ''', map(transform_ticket, self.events_cursor.fetchall()))
         print("Inserted all tickets")
 
-    def __migrate_badges(self) -> None:
+    async def __migrate_badges(self) -> None:
         # Queries - Badges
         self.users_cursor.execute('''
             SELECT user_id, to_json(badges)
             AS badges
             FROM cd_profiles
-            WHERE badges IS NOT null AND json_array_length(to_json(badges)) >= 1
+            WHERE badges IS NOT null
+            AND json_array_length(to_json(badges)) >= 1
         ''')
         for row in self.users_cursor.fetchall():
             self.dw_cursor.executemany('''
@@ -236,7 +213,7 @@ class Convertor():
             ''', transform_badges(row))
         print('Inserted badges')
 
-    def __migrate_leads(self):
+    async def __migrate_leads(self):
         # Queries - Leads
         self.dojos_cursor.execute('''
             SELECT id, user_id,
@@ -280,11 +257,12 @@ class Convertor():
                 created_at,
                 updated_at,
                 completed_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s)
         ''', map(transform_lead, self.dojos_cursor.fetchall()))
         print('Inserted leads')
 
-    def __stage(self) -> None:
+    async def __stage(self) -> None:
         # Queries - Staging
         self.events_cursor.execute('''
             SELECT cd_applications.id, cd_applications.ticket_id,
@@ -310,7 +288,7 @@ class Convertor():
         ''', map(stage(self.dw_cursor), self.events_cursor.fetchall()))
         print('Populated staging')
 
-    def __stage_badges(self) -> None:
+    async def __stage_badges(self) -> None:
         self.dw_cursor.execute('SELECT badge_id, user_id FROM "dimBadges"')
         self.dw_cursor.executemany('''
             UPDATE "staging"
@@ -319,12 +297,13 @@ class Convertor():
         ''', add_badges(self.dw_cursor.fetchall()))
         print('Badges added to staging')
 
-    def __measure(self) -> None:
+    async def __measure(self) -> None:
         # Queries - Measures
         self.dw_cursor.execute('''
-            SELECT "staging".dojo_id, "staging".ticket_id, "staging".session_id,
-                "staging".event_id, "staging".user_id, "staging".time,
-                "staging".location_id, "staging".badge_id, "staging".checked_in
+            SELECT "staging".dojo_id, "staging".ticket_id,
+                "staging".session_id, "staging".event_id,
+                "staging".user_id, "staging".time, "staging".location_id,
+                "staging".badge_id, "staging".checked_in
             FROM "staging"
              INNER JOIN "dimDojos"
               ON "staging".dojo_id = "dimDojos".id
@@ -334,9 +313,10 @@ class Convertor():
               "staging".location_id = "dimLocation".location_id
             INNER JOIN "dimBadges"
               ON "staging".badge_id = "dimBadges".badge_id
-             GROUP BY "staging".event_id, "staging".dojo_id, "staging".ticket_id, "staging".session_id,
-                "staging".event_id, "staging".user_id, "staging".time,
-                "staging".location_id, "staging".badge_id, "staging".checked_in
+            GROUP BY "staging".event_id, "staging".dojo_id,
+                "staging".ticket_id, "staging".session_id, "staging".event_id,
+                "staging".user_id, "staging".time, "staging".location_id,
+                "staging".badge_id, "staging".checked_in
         ''')
         self.dw_cursor.executemany('''
             INSERT INTO "public"."factUsers"(

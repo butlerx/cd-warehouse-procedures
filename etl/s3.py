@@ -1,11 +1,8 @@
 """interacting with s3"""
-from collections import namedtuple
-
-import botocore
 
 from boto3 import Session
-
-AWS = namedtuple('AWS', 'bucket access_key secret_key')
+from botocore import exceptions
+from local_types import AWS
 
 
 def download(database: str, aws: AWS) -> None:
@@ -22,7 +19,7 @@ def download(database: str, aws: AWS) -> None:
     try:
         print('Restoring from {}'.format(obj.key))
         bucket.download_file(obj.key, '/db/{}.tar.gz'.format(database))
-    except botocore.exceptions.ClientError as err:
+    except exceptions.ClientError as err:
         if err.response['Error']['Code'] == "404":
             pass
         else:
