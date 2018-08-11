@@ -8,7 +8,6 @@ services:
   migration:
     build: .
     image: coderdojo/cd-warehouse-procedures
-    command: [ "python", "./etl/main.py" ]
     depends_on:
       - db
     volumes:

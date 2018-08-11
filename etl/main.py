@@ -70,7 +70,7 @@ class Warehouse:
             self.databases.dojos, self.databases.events, self.databases.users
         )
         print(
-            "Removed {}, {} and {}".format(
+            "Removed {0}, {1} and {2}".format(
                 self.databases.dojos, self.databases.events, self.databases.users
             )
         )
@@ -100,9 +100,10 @@ def __cli():
     )
     args = parser.parse_args()
     with open(args.config) as data:
-        warehouse = Warehouse(load(data))
         loop = get_event_loop()
-        loop.run_until_complete(warehouse.main(dev=args.dev, db_path=args.db))
+        loop.run_until_complete(
+            Warehouse(load(data)).main(dev=args.dev, db_path=args.db)
+        )
         loop.close()
 
 
