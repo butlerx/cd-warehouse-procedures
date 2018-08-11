@@ -37,23 +37,25 @@ class Warehouse:
         )
         self.cleaner = Cleaner(self.con)
 
-    async def get(self, name: str, database: str, path: str, dev: bool = False) -> None:
+    async def download(
+        self, name: str, database: str, path: str, dev: bool = False
+    ) -> None:
         """download if not in dev mode backups and restore from them"""
         print("Restoring db", name)
         if not dev:
-            download(name, self.aws, path)
-        restore_db(self.con, database, path, name)
+            await download(name, self.aws, path)
+        await restore_db(self.con, database, path, name)
 
-    async def main(self, dev: bool = False, db_path: str = "./db") -> None:
+    async def run(self, dev: bool = False, db_path: str = "./db") -> None:
         """main function"""
         try:
             await self.cleaner.reset_databases(self.databases)
             print("Databases Reset")
 
             await gather(
-                self.get("dojos", self.databases.dojos, db_path, dev),
-                self.get("events", self.databases.events, db_path, dev),
-                self.get("users", self.databases.users, db_path, dev),
+                self.download("dojos", self.databases.dojos, db_path, dev),
+                self.download("events", self.databases.events, db_path, dev),
+                self.download("users", self.databases.users, db_path, dev),
             )
 
             convertor = Migrator(self.databases, self.con)
@@ -77,7 +79,8 @@ class Warehouse:
         exit(exit_code)
 
 
-def __cli():
+def cli():
+    """cli interface"""
     parser = ArgumentParser(
         prog="etl", description="migrate production databases backups to datawarehouse"
     )
@@ -102,10 +105,10 @@ def __cli():
     with open(args.config) as data:
         loop = get_event_loop()
         loop.run_until_complete(
-            Warehouse(load(data)).main(dev=args.dev, db_path=args.db)
+            Warehouse(load(data)).run(dev=args.dev, db_path=args.db)
         )
         loop.close()
 
 
 if __name__ == "__main__":
-    __cli()
+    cli()

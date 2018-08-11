@@ -7,5 +7,5 @@ RUN apk add --update build-base postgresql-dev postgresql && \
     mkdir /db && \
     apk del build-base
 COPY . /usr/src/app
-ENTRYPOINT [ "python", "./etl/main.py" ]
+ENTRYPOINT [ "python", "etl" ]
 CMD ["--db-path", "/db/"]

@@ -6,7 +6,7 @@ from subprocess import DEVNULL, STDOUT, Popen
 from clean_up import Connection
 
 
-def restore_db(con: Connection, database: str, root_path: str, name: str) -> None:
+async def restore_db(con: Connection, database: str, root_path: str, name: str) -> None:
     """restore a pg backup stored in specified folder"""
     directory = "{}/{}".format(root_path, name)
     if not path.exists(directory):
