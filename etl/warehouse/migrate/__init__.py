@@ -1,16 +1,17 @@
 """reads and writes to database"""
 
-from badges import add_badges, transform_badges
-from dojos import link_users, transform_dojo
-from events import transform_event
-from leads import transform_lead
-from local_types import Connection, Databases
-from measures import get_id
 from psycopg2 import connect
 from psycopg2.extras import DictCursor
-from staging import stage
-from tickets import transform_ticket
-from users import transform_user
+from warehouse.local_types import Connection, Databases
+
+from .badges import add_badges, transform_badges
+from .dojos import link_users, transform_dojo
+from .events import transform_event
+from .leads import transform_lead
+from .measures import get_id
+from .staging import stage
+from .tickets import transform_ticket
+from .users import transform_user
 
 
 class Migrator:

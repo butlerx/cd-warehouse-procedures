@@ -1,7 +1,7 @@
 """for functions realted too dojos"""
 from typing import Dict, Tuple
 
-from transform_json import get_city, get_country, get_county, get_state
+from .transform_json import get_city, get_country, get_county, get_state
 
 
 def transform_dojo(row: Dict) -> Tuple:

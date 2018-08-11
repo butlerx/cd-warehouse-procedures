@@ -1,9 +1,10 @@
 """class for reset and removeing databases"""
 from asyncio import wait
 
-from local_types import Connection, Databases
 from psycopg2 import Error, connect
 from psycopg2.extras import DictCursor
+
+from .local_types import Connection, Databases
 
 
 class Cleaner:

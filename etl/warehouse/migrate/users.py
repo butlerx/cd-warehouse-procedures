@@ -1,7 +1,7 @@
 """for functions realted too users"""
 from typing import Dict, Tuple
 
-from transform_json import get_city, get_country
+from .transform_json import get_city, get_country
 
 
 def transform_user(row: Dict) -> Tuple:

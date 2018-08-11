@@ -3,7 +3,8 @@ from typing import Dict, Tuple
 from uuid import uuid4
 
 from isodate import parse_datetime
-from transform_json import get_city, get_country
+
+from .transform_json import get_city, get_country
 
 
 def stage(cursor):
