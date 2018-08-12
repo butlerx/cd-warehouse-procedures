@@ -26,4 +26,4 @@ def transform_badges(row: Dict) -> List[Tuple]:
 
 def add_badges(rows: List) -> List[Tuple]:
     """add badge to db"""
-    return list(map(lambda row: (row["badge_id"], row["user_id"]), rows))
+    return [(row["badge_id"], row["user_id"]) for row in rows]

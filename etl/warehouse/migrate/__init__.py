@@ -102,7 +102,7 @@ class Migrator:
                 lead_id)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s, %s)""",
-            map(transform_dojo, self.dojos_cursor.fetchall()),
+            list(map(transform_dojo, self.dojos_cursor.fetchall())),
         )
         print("Inserted all dojos")
 
@@ -124,7 +124,7 @@ class Migrator:
                 dojo_id,
                 user_type)
             VALUES (%s, %s, %s, %s)""",
-            map(link_users, self.dojos_cursor.fetchall()),
+            list(map(link_users, self.dojos_cursor.fetchall())),
         )
         print("Linked all dojos and users")
 
@@ -155,7 +155,7 @@ class Migrator:
                 is_eb,
                 start_time)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            map(transform_event, self.events_cursor.fetchall()),
+            list(map(transform_event, self.events_cursor.fetchall())),
         )
         print("Inserted all events and locations")
 
@@ -178,7 +178,7 @@ class Migrator:
                 mailing_list,
                 created_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            map(transform_user, self.users_cursor.fetchall()),
+            list(map(transform_user, self.users_cursor.fetchall())),
         )
         print("Inserted all users")
 
@@ -200,7 +200,7 @@ class Migrator:
                 quantity,
                 deleted)
             VALUES (%s, %s, %s, %s)""",
-            map(transform_ticket, self.events_cursor.fetchall()),
+            list(map(transform_ticket, self.events_cursor.fetchall())),
         )
         print("Inserted all tickets")
 
@@ -274,7 +274,7 @@ class Migrator:
                 completed_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            map(transform_lead, self.dojos_cursor.fetchall()),
+            list(map(transform_lead, self.dojos_cursor.fetchall())),
         )
         print("Inserted leads")
 
@@ -301,7 +301,7 @@ class Migrator:
                 location_id,
                 id
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            map(stage(self.dw_cursor), self.events_cursor.fetchall()),
+            list(map(stage(self.dw_cursor), self.events_cursor.fetchall())),
         )
         print("Populated staging")
 
@@ -348,5 +348,5 @@ class Migrator:
                 badge_id,
                 checked_in
             ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            map(get_id, self.dw_cursor.fetchall()),
+            list(map(get_id, self.dw_cursor.fetchall())),
         )

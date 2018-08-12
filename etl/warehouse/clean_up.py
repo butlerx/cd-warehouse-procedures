@@ -20,8 +20,8 @@ class Cleaner:
     async def reset_databases(self, databases: Databases) -> None:
         """reset all databases to empty"""
         try:
-            await wait(map(self.drop_databases, databases))
-            await wait(map(self.create_databases, databases))
+            await wait(list(map(self.drop_databases, databases)))
+            await wait(list(map(self.create_databases, databases)))
         except Error as err:
             print(err)
 
@@ -53,7 +53,7 @@ class Cleaner:
         except Error:
             pass
 
-    async def close(self, *kwargs) -> None:
+    async def close(self, *args) -> None:
         """close connection to database and remove specific dbs"""
-        await wait(map(self.drop_databases, kwargs))
+        await wait(list(map(self.drop_databases, args)))
         self.cursor.connection.close()
