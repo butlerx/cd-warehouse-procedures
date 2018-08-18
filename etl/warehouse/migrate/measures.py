@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from .migration import Migration
 
+
 class Measure(Migration):
     """class for measurements"""
 

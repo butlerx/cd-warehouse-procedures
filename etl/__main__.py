@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from asyncio import get_event_loop
 from json import load
 
-from warehouse import Warehouse
+from warehouse import warehouse
 
 
 def cli():
@@ -33,9 +33,7 @@ def cli():
     args = parser.parse_args()
     with open(args.config) as data:
         loop = get_event_loop()
-        loop.run_until_complete(
-            Warehouse(load(data)).run(dev=args.dev, db_path=args.db)
-        )
+        loop.run_until_complete(warehouse(load(data), dev=args.dev, db_path=args.db))
         loop.close()
 
 

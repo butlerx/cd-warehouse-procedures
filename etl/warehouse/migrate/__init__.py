@@ -1,5 +1,4 @@
 """reads and writes to database"""
-
 from typing import List, Tuple
 
 from psycopg2 import connect, cursor
@@ -28,7 +27,6 @@ class Migrator:
             "events": self._connect_db(con, databases.events),
             "users": self._connect_db(con, databases.users),
         }
-        self.databases = databases
 
     @staticmethod
     def _connect_db(con: Connection, database: str) -> cursor:
@@ -40,15 +38,15 @@ class Migrator:
             .cursor(cursor_factory=DictCursor)
         )
 
-    async def disconnect(self) -> None:
+    async def _disconnect(self) -> None:
         """disconnect from db's"""
         for _, curs in self.cursors.items():
             curs.connection.close()
 
     async def migrate_db(self) -> None:
         """perform db migrations"""
-        await self.__truncate()
-        await self.__tasks(
+        await self._truncate()
+        await self._tasks(
             [
                 ("dojos", Dojo, "Inserted all dojos"),
                 ("dojos", UserDojo, "Linked all dojos and users"),
@@ -57,8 +55,8 @@ class Migrator:
                 ("events", Ticket, "Inserted all tickets"),
             ]
         )
-        await self.__migrate_badges()
-        await self.__tasks(
+        await self._migrate_badges()
+        await self._tasks(
             [
                 ("dojos", Lead, "Inserted leads"),
                 ("events", staging(self.dw_cursor), "Populated staging"),
@@ -66,24 +64,31 @@ class Migrator:
                 ("dw", Measure, ""),
             ]
         )
+        await self._disconnect()
 
-    async def __truncate(self) -> None:
+    async def _truncate(self) -> None:
         """ Truncate all tables before fresh insert from sources"""
-        for table in [
-            "factUsers",
-            "dimDojos",
-            "dimDojoLeads",
-            "dimUsers",
-            "dimEvents",
-            "dimLocation",
-            "dimUsersDojos",
-            "dimTickets",
-            "staging",
-            "dimBadges",
-        ]:
-            self.dw_cursor.execute('TRUNCATE TABLE "{}" CASCADE'.format(table))
+        self.dw_cursor.execute(
+            ";".join(
+                [
+                    'TRUNCATE TABLE "{}" CASCADE'.format(table)
+                    for table in [
+                        "factUsers",
+                        "dimDojos",
+                        "dimDojoLeads",
+                        "dimUsers",
+                        "dimEvents",
+                        "dimLocation",
+                        "dimUsersDojos",
+                        "dimTickets",
+                        "staging",
+                        "dimBadges",
+                    ]
+                ]
+            )
+        )
 
-    async def __tasks(self, tasks: List[Tuple]) -> None:
+    async def _tasks(self, tasks: List[Tuple]) -> None:
         """Runs Migration"""
         for db, Task, msg in tasks:
             self.cursors[db].execute(Task.select_sql())
@@ -93,7 +98,7 @@ class Migrator:
             )
             print(msg)
 
-    async def __migrate_badges(self) -> None:
+    async def _migrate_badges(self) -> None:
         """Queries - Badges"""
         self.cursors["users"].execute(Badge.select_sql())
         for row in self.cursors["users"].fetchall():

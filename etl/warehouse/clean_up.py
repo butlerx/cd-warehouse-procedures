@@ -11,17 +11,19 @@ class Cleaner:
     """class responsible for reseting all databases"""
 
     def __init__(self, con: Connection) -> None:
-        dw_setup = connect(
-            dbname="postgres", host=con.host, user=con.user, password=con.password
+        self.cursor = (
+            connect(
+                dbname="postgres", host=con.host, user=con.user, password=con.password
+            )
+            .set_session(autocommit=True)
+            .cursor(cursor_factory=DictCursor)
         )
-        dw_setup.set_session(autocommit=True)
-        self.cursor = dw_setup.cursor(cursor_factory=DictCursor)
 
     async def reset_databases(self, databases: Databases) -> None:
         """reset all databases to empty"""
         try:
-            await wait(list(map(self.drop_databases, databases)))
-            await wait(list(map(self.create_databases, databases)))
+            await wait([self.drop_databases(db) for db in databases])
+            await wait([self.create_databases(db) for db in databases])
         except Error as err:
             print(err)
 
@@ -41,12 +43,10 @@ class Cleaner:
         """kill all connects to a database"""
         try:
             self.cursor.execute(
-                """SELECT
-                    pg_terminate_backend(pg_stat_activity.pid)
+                """SELECT pg_terminate_backend(pg_stat_activity.pid)
                 FROM pg_stat_activity
                 WHERE pg_stat_activity.datname = '{0}'
-                  AND pid <> pg_backend_pid();
-                """.format(
+                AND pid <> pg_backend_pid();""".format(
                     database
                 )
             )
@@ -55,5 +55,5 @@ class Cleaner:
 
     async def close(self, *args) -> None:
         """close connection to database and remove specific dbs"""
-        await wait(list(map(self.drop_databases, args)))
+        await wait([self.drop_databases(arg) for arg in args])
         self.cursor.connection.close()

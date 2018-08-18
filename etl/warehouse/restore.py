@@ -6,9 +6,9 @@ from subprocess import DEVNULL, STDOUT, Popen
 from .local_types import Connection
 
 
-async def restore_db(con: Connection, database: str, root_path: str, name: str) -> None:
+async def restore_db(con: Connection, database: tuple) -> None:
     """restore a pg backup stored in specified folder"""
-    directory = "{}/{}".format(root_path, name)
+    directory = "{}/{}".format(database[2], database[0])
     if not path.exists(directory):
         makedirs(directory)
     tar = Popen(
@@ -23,7 +23,7 @@ async def restore_db(con: Connection, database: str, root_path: str, name: str) 
     tar.wait()
     cmd = "pg_restore -c --if-exists -w -h {0} -d {1} -U {2} {3}/backup_dump"
     postgres = Popen(
-        split(cmd.format(con.host, database, con.user, directory)),
+        split(cmd.format(con.host, database[1], con.user, directory)),
         shell=False,
         stderr=STDOUT,
         env=pg_env,
