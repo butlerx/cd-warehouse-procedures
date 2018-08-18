@@ -1,10 +1,11 @@
 """for functions realted too dojos"""
 from typing import Dict, Tuple
 
+from .migration import Migration
 from .transform_json import get_city, get_country, get_county, get_state
 
 
-class UserDojo:
+class UserDojo(Migration):
     """link users too dojos"""
 
     def __init__(self, row: Dict) -> None:
@@ -39,7 +40,7 @@ class UserDojo:
             WHERE deleted = 0"""
 
 
-class Dojo:
+class Dojo(Migration):
     """dojos object"""
 
     def __init__(self, row: Dict) -> None:

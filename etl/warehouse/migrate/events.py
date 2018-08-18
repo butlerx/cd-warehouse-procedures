@@ -3,9 +3,10 @@
 from typing import Dict, Tuple
 
 from .transform_json import get_city, get_country
+from .migration import Migration
 
 
-class Event:
+class Event(Migration):
     """event object"""
 
     def __init__(self, row: Dict) -> None:

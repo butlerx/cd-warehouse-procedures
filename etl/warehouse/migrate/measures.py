@@ -2,8 +2,9 @@
 from typing import Dict, Tuple
 from uuid import uuid4
 
+from .migration import Migration
 
-class Measure:
+class Measure(Migration):
     """class for measurements"""
 
     def __init__(self, args: Dict) -> None:

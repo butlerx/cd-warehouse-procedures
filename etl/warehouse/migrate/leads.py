@@ -1,8 +1,10 @@
 """function related to leads"""
 from typing import Dict, Optional, Tuple
 
+from .migration import Migration
 
-class Lead:
+
+class Lead(Migration):
     """Lead object"""
 
     def __init__(self, row: Dict) -> None:

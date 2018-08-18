@@ -2,8 +2,10 @@
 
 from typing import Dict, Tuple
 
+from .migration import Migration
 
-class Ticket:
+
+class Ticket(Migration):
     """ticket object"""
 
     def __init__(self, row: Dict) -> None:

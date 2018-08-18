@@ -1,10 +1,11 @@
 """for functions realted too users"""
 from typing import Dict, Tuple
 
+from .migration import Migration
 from .transform_json import get_city, get_country
 
 
-class User:
+class User(Migration):
     """user object"""
 
     def __init__(self, row: Dict) -> None:

@@ -2,8 +2,10 @@
 from typing import Dict, Tuple
 from uuid import uuid4
 
+from .migration import Migration
 
-class StagedBadge:
+
+class StagedBadge(Migration):
     """staged badge"""
 
     def __init__(self, row: Dict) -> None:
@@ -25,7 +27,7 @@ class StagedBadge:
         return 'UPDATE "staging" SET badge_id=%s WHERE user_id=%s'
 
 
-class Badge:
+class Badge(Migration):
     """badge object"""
 
     def __init__(self, user_id: str, row: Dict) -> None:
