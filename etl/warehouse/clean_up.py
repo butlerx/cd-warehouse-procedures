@@ -25,7 +25,7 @@ class Cleaner:
         except Error as err:
             print(err)
 
-    async def create_databases(self, database):
+    async def create_databases(self, database) -> None:
         """create database"""
         self.cursor.execute('CREATE DATABASE "{0}";'.format(database))
 

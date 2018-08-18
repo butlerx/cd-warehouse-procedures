@@ -64,7 +64,7 @@ class Warehouse:
             print(err)
             self._exit(1)
 
-    def _exit(self, exit_code: int):
+    def _exit(self, exit_code: int) -> None:
         self.cleaner.close(
             self.databases.dojos, self.databases.events, self.databases.users
         )

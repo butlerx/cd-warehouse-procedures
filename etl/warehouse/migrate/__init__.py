@@ -1,6 +1,6 @@
 """reads and writes to database"""
 
-from psycopg2 import connect
+from psycopg2 import connect, cursor
 from psycopg2.extras import DictCursor
 from warehouse.local_types import Connection, Databases
 
@@ -26,7 +26,7 @@ class Migrator:
         self.con = con
         self.databases = databases
 
-    def _connect_db(self, database):
+    def _connect_db(self, database: str) -> cursor:
         conn = connect(
             dbname=database,
             host=self.con.host,
@@ -43,7 +43,7 @@ class Migrator:
         self.events_cursor.connection.close()
         self.dojos_cursor.connection.close()
 
-    async def migrate_db(self):
+    async def migrate_db(self) -> None:
         """perform db migrations"""
         await self.__truncate()
         await self.__migrate_dojos()
@@ -106,7 +106,7 @@ class Migrator:
         )
         print("Inserted all dojos")
 
-    async def __link_dojos_users(self):
+    async def __link_dojos_users(self) -> None:
         """Queries - Dojos"""
         self.dojos_cursor.execute(
             """SELECT
@@ -228,7 +228,7 @@ class Migrator:
             )
         print("Inserted badges")
 
-    async def __migrate_leads(self):
+    async def __migrate_leads(self) -> None:
         """Queries - Leads"""
         self.dojos_cursor.execute(
             """SELECT id, user_id,

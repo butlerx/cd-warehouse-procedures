@@ -1,13 +1,14 @@
 """function realted to staging"""
-from typing import Dict, Tuple
+from typing import Callable, Dict, Tuple
 from uuid import uuid4
 
 from isodate import parse_datetime
+from psycopg2 import cursor
 
 from .transform_json import get_city, get_country
 
 
-def stage(cursor):
+def stage(db_cursor: cursor) -> Callable[[Dict], Tuple]:
     """returns function for staging data"""
 
     def _calculate(row: Dict) -> Tuple:
@@ -18,7 +19,7 @@ def stage(cursor):
             else None
         )
         location_id = str(uuid4())
-        cursor.execute(
+        db_cursor.execute(
             """
             INSERT INTO "public"."dimLocation"(
                 country,

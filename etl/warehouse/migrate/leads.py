@@ -1,7 +1,8 @@
 """function related to leads"""
+from typing import Dict, Tuple
 
 
-def transform_lead(row):
+def transform_lead(row: Dict) -> Tuple:
     """ Transform / Load for Lead Dimension"""
     has_mentors = (
         True
