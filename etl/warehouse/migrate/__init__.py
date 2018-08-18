@@ -5,11 +5,11 @@ from psycopg2.extras import DictCursor
 from warehouse.local_types import Connection, Databases
 
 from .badges import Badge, StagedBadge
-from .dojos import Dojo, UserDojo, link_users
+from .dojos import Dojo, UserDojo
 from .events import Event
 from .leads import Lead
 from .measures import Measure
-from .staging import stage
+from .staging import Stage
 from .tickets import Ticket
 from .users import User
 
@@ -136,28 +136,13 @@ class Migrator:
 
     async def __stage(self) -> None:
         """Queries - Staging"""
-        self.events_cursor.execute(
-            """SELECT cd_applications.id, cd_applications.ticket_id,
-                cd_applications.session_id, cd_applications.event_id,
-                cd_applications.dojo_id, cd_applications.user_id,
-                cd_applications.attendance,
-                dates, country, city
-            FROM cd_applications
-            INNER JOIN cd_events ON cd_applications.event_id = cd_events.id"""
-        )
+        self.events_cursor.execute(Stage.select_sql())
         self.dw_cursor.executemany(
-            """INSERT INTO "staging"(
-                user_id,
-                dojo_id,
-                event_id,
-                session_id,
-                ticket_id,
-                checked_in,
-                time,
-                location_id,
-                id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            list(map(stage(self.dw_cursor), self.events_cursor.fetchall())),
+            Stage.insert_sql(),
+            [
+                Stage(self.dw_cursor, row).to_tuple
+                for row in self.events_cursor.fetchall()
+            ],
         )
         print("Populated staging")
 
