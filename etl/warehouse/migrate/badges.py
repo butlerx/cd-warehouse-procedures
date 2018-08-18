@@ -1,11 +1,28 @@
 """Badge related transformations"""
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 from uuid import uuid4
 
 
-def add_badges(rows: List) -> List[Tuple]:
-    """add badge to db"""
-    return [(row["badge_id"], row["user_id"]) for row in rows]
+class StagedBadge:
+    """staged badge"""
+
+    def __init__(self, row: Dict) -> None:
+        self.badge_id: str = row["badge_id"]
+        self.user_id: str = row["user_id"]
+
+    def to_tuple(self) -> Tuple:
+        """convert to tuple"""
+        return (self.badge_id, self.user_id)
+
+    @staticmethod
+    def select_sql() -> str:
+        """sql to select badge"""
+        return 'SELECT badge_id, user_id FROM "dimBadges"'
+
+    @staticmethod
+    def insert_sql() -> str:
+        """sql to insert badge"""
+        return 'UPDATE "staging" SET badge_id=%s WHERE user_id=%s'
 
 
 class Badge:

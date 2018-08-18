@@ -4,13 +4,39 @@ from typing import Dict, Tuple
 from .transform_json import get_city, get_country, get_county, get_state
 
 
-def transform_dojo(row: Dict) -> Tuple:
-    """Transform / Load for Dojo Dimension"""
-
-
-def link_users(row: Dict) -> Tuple:
+class UserDojo:
     """link users too dojos"""
-    return (row["id"], row["user_id"], row["dojo_id"], row["user_type"])
+
+    def __init__(self, row: Dict) -> None:
+        self.id: str = row["id"]
+        self.user_id: str = row["user_id"]
+        self.dojo_id: str = row["dojo_id"]
+        self.user_type: str = row["user_type"]
+
+    def to_tuple(self) -> Tuple:
+        """convert link to tuple"""
+        return (self.id, self.user_id, self.dojo_id, self.user_type)
+
+    @staticmethod
+    def insert_sql() -> str:
+        """sql to insert link"""
+        return """INSERT INTO "public"."dimUsersDojos"(
+                id,
+                user_id,
+                dojo_id,
+                user_type)
+            VALUES (%s, %s, %s, %s)"""
+
+    @staticmethod
+    def select_sql() -> str:
+        """sql for selecting dojo"""
+        return """SELECT
+                id,
+                user_id,
+                dojo_id,
+                unnest(user_types) as user_type
+            FROM cd_usersdojos
+            WHERE deleted = 0"""
 
 
 class Dojo:
@@ -117,15 +143,15 @@ class Dojo:
             inactive_at,
             is_eb,
             lead_id)
-        VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        VALUES ( % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s)"""
 
     @staticmethod
     def select_sql() -> str:
         """sql for selecting dojo"""
         return """SELECT * FROM cd_dojos
-            LEFT JOIN (
+            LEFT JOIN(
                 SELECT dojo_id, max(updated_at) as inactive_at
                 FROM audit.dojo_stage
-                WHERE stage = 4 GROUP BY dojo_id)
+                WHERE stage=4 GROUP BY dojo_id)
             as q ON q.dojo_id = cd_dojos.id
             WHERE verified = 1 and deleted = 0"""

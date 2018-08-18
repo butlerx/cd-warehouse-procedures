@@ -4,14 +4,14 @@ from psycopg2 import connect, cursor
 from psycopg2.extras import DictCursor
 from warehouse.local_types import Connection, Databases
 
-from .badges import Badge, add_badges
-from .dojos import Dojo, link_users
+from .badges import Badge, StagedBadge
+from .dojos import Dojo, UserDojo, link_users
 from .events import Event
 from .leads import Lead
 from .measures import Measure
 from .staging import stage
-from .tickets import transform_ticket
-from .users import transform_user
+from .tickets import Ticket
+from .users import User
 
 
 class Migrator:
@@ -81,22 +81,9 @@ class Migrator:
 
     async def __link_dojos_users(self) -> None:
         """Queries - Dojos"""
-        self.dojos_cursor.execute(
-            """SELECT
-                id,
-                user_id,
-                dojo_id,
-                unnest(user_types) as user_type
-            FROM cd_usersdojos
-            WHERE deleted = 0"""
-        )
+        self.dojos_cursor.execute(UserDojo.select_sql())
         self.dw_cursor.executemany(
-            """INSERT INTO "public"."dimUsersDojos"(
-                id,
-                user_id,
-                dojo_id,
-                user_type)
-            VALUES (%s, %s, %s, %s)""",
+            UserDojo.insert_sql(),
             [link_users(row) for row in self.dojos_cursor.fetchall()],
         )
         print("Linked all dojos and users")
@@ -112,46 +99,19 @@ class Migrator:
 
     async def __migrate_users(self) -> None:
         """ Queries - Users"""
-        self.users_cursor.execute(
-            """SELECT *
-            FROM cd_profiles
-            INNER JOIN sys_user ON cd_profiles.user_id = sys_user.id"""
-        )
+        self.users_cursor.execute(User.select_sql())
         self.dw_cursor.executemany(
-            """INSERT INTO "public"."dimUsers"(
-                user_id,
-                dob,
-                country,
-                city,
-                gender,
-                user_type,
-                roles,
-                mailing_list,
-                created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            list(map(transform_user, self.users_cursor.fetchall())),
+            User.insert_sql(),
+            [User(row).to_tuple() for row in self.users_cursor.fetchall()],
         )
         print("Inserted all users")
 
     async def __migrate_tickets(self) -> None:
         """Queries - Tickets"""
-        self.events_cursor.execute(
-            """SELECT status,
-                cd_tickets.id AS ticket_id,
-                type,
-                quantity,
-                deleted
-            FROM cd_sessions
-            INNER JOIN cd_tickets ON cd_sessions.id = cd_tickets.session_id"""
-        )
+        self.events_cursor.execute(Ticket.select_sql())
         self.dw_cursor.executemany(
-            """INSERT INTO "public"."dimTickets"(
-                ticket_id,
-                type,
-                quantity,
-                deleted)
-            VALUES (%s, %s, %s, %s)""",
-            list(map(transform_ticket, self.events_cursor.fetchall())),
+            Ticket.insert_sql(),
+            [Ticket(row).to_tuple() for row in self.events_cursor.fetchall()],
         )
         print("Inserted all tickets")
 
@@ -202,12 +162,10 @@ class Migrator:
         print("Populated staging")
 
     async def __stage_badges(self) -> None:
-        self.dw_cursor.execute('SELECT badge_id, user_id FROM "dimBadges"')
+        self.dw_cursor.execute(StagedBadge.select_sql())
         self.dw_cursor.executemany(
-            """UPDATE "staging"
-            SET badge_id=%s
-            WHERE user_id=%s""",
-            add_badges(self.dw_cursor.fetchall()),
+            StagedBadge.insert_sql(),
+            [StagedBadge(row).to_tuple() for row in self.dw_cursor.fetchall()],
         )
         print("Badges added to staging")
 

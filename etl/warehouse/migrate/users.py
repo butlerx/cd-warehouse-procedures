@@ -4,22 +4,73 @@ from typing import Dict, Tuple
 from .transform_json import get_city, get_country
 
 
-def transform_user(row: Dict) -> Tuple:
-    """Transform / Load for User Dimension"""
-    country = get_country(row["country"])
-    city = get_city(row["city"])
-    gender = (
-        row["gender"] if (row["gender"] is not None) and row["gender"] else "Unknown"
-    )
-    roles = row["roles"][0] if row["roles"] else "Unknown"
-    return (
-        row["user_id"],
-        row["dob"],
-        country,
-        city,
-        gender,
-        row["user_type"],
-        roles,
-        row["mailing_list"],
-        row["when"],
-    )
+class User:
+    """user object"""
+
+    def __init__(self, row: Dict) -> None:
+        self._data = row
+        self.user_id: str = row["user_id"]
+        self.dob: str = row["dob"]
+        self.user_type: str = row["user_type"]
+        self.mailing_list: str = row["mailing_list"]
+        self.when: str = row["when"]
+
+    @property
+    def country(self) -> str:
+        """users country"""
+        return get_country(self._data["country"])
+
+    @property
+    def city(self) -> str:
+        """"users city"""
+        return get_city(self._data["city"])
+
+    @property
+    def gender(self) -> str:
+        """users gender"""
+        return (
+            self._data["gender"]
+            if (self._data["gender"] is not None) and self._data["gender"]
+            else "Unknown"
+        )
+
+    @property
+    def role(self) -> str:
+        """users role"""
+        return self._data["roles"][0] if self._data["roles"] else "Unknown"
+
+    def to_tuple(self) -> Tuple:
+        """Transform to Tuple"""
+        return (
+            self.user_id,
+            self.dob,
+            self.country,
+            self.city,
+            self.gender,
+            self.user_type,
+            self.role,
+            self.mailing_list,
+            self.when,
+        )
+
+    @staticmethod
+    def insert_sql() -> str:
+        """sql command to insert user"""
+        return """INSERT INTO "public"."dimUsers"(
+            user_id,
+            dob,
+            country,
+            city,
+            gender,
+            user_type,
+            roles,
+            mailing_list,
+            created_at)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+
+    @staticmethod
+    def select_sql() -> str:
+        """sql command to select user"""
+        return """SELECT *
+            FROM cd_profiles
+            INNER JOIN sys_user ON cd_profiles.user_id = sys_user.id"""
