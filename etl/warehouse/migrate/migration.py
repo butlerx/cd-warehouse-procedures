@@ -6,7 +6,7 @@ class Migration:
     """base migration class"""
 
     def __init__(self, data: dict) -> None:
-        pass
+        self._data = data
 
     @staticmethod
     def insert_sql() -> str:

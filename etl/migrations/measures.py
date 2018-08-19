@@ -12,28 +12,21 @@ def measure(_):
         """class for measurements"""
 
         def __init__(self, args: Dict) -> None:
+            super().__init__(args)
             self.id: str = str(uuid4())
-            self.dojo_id: str = args["dojo_id"]
-            self.ticket_id: str = args["ticket_id"]
-            self.event_id: str = args["event_id"]
-            self.user_id: str = args["user_id"]
-            self.time: str = args["time"]
-            self.location_id: str = args["location_id"]
-            self.badge_id: str = args["badge_id"]
-            self.checked_in: str = args["checked_in"]
 
         def to_tuple(self) -> Tuple:
             """convert event to tuple"""
             return (
-                self.dojo_id,
-                self.ticket_id,
-                self.event_id,
-                self.user_id,
-                self.time,
-                self.location_id,
+                self._data["dojo_id"],
+                self._data["ticket_id"],
+                self._data["event_id"],
+                self._data["user_id"],
+                self._data["time"],
+                self._data["location_id"],
                 self.id,
-                self.badge_id,
-                self.checked_in,
+                self._data["badge_id"],
+                self._data["checked_in"],
             )
 
         @staticmethod
@@ -70,7 +63,7 @@ def measure(_):
                 id,
                 badge_id,
                 checked_in
-            ) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
     class _MeasureMigration(Runner):
         """migration of measurements"""

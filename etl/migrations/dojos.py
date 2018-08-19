@@ -9,15 +9,14 @@ from .transform_json import get_city, get_country, get_county, get_state
 class UserDojo(Migration):
     """link users too dojos"""
 
-    def __init__(self, row: Dict) -> None:
-        self.id: str = row["id"]
-        self.user_id: str = row["user_id"]
-        self.dojo_id: str = row["dojo_id"]
-        self.user_type: str = row["user_type"]
-
     def to_tuple(self) -> Tuple:
         """convert link to tuple"""
-        return (self.id, self.user_id, self.dojo_id, self.user_type)
+        return (
+            self._data["id"],
+            self._data["user_id"],
+            self._data["dojo_id"],
+            self._data["user_type"],
+        )
 
     @staticmethod
     def insert_sql() -> str:
@@ -52,38 +51,25 @@ class UserDojoMigration(Runner):
 class Dojo(Migration):
     """dojos object"""
 
-    def __init__(self, row: Dict) -> None:
-        self._data = row
-        self.id: str = row["id"]
-        self.created: str = row["created"]
-        self.verified_at: str = row["verified_at"]
-        self.stage: int = row["stage"]
-        self.verified: bool = row["verified"]
-        self.deleted: bool = row["deleted"]
-        self.inactive_at: str = row["inactive_at"]
-        self.dojo_lead_id: str = row["dojo_lead_id"]
-        self.continent: str = row["continent"]
-        self.tao_verified: bool = row["tao_verified"]
+    @property
+    def state(self) -> str:
+        """dojos state"""
+        return get_state(self._data["state"])
 
     @property
     def country(self) -> str:
-        """country dojo is in"""
+        "dojos country" ""
         return get_country(self._data["country"])
 
     @property
     def county(self) -> str:
-        """county the dojo is in"""
+        "dojos county" ""
         return get_county(self._data["county"])
 
     @property
     def city(self) -> str:
         """dojos city"""
         return get_city(self._data["city"])
-
-    @property
-    def state(self) -> str:
-        """dojos state"""
-        return get_state(self._data["state"])
 
     @property
     def expected_attendees(self) -> int:
@@ -113,23 +99,23 @@ class Dojo(Migration):
     def to_tuple(self) -> Tuple:
         """convert dojo to tuple"""
         return (
-            self.id,
-            self.created,
-            self.verified_at,
-            self.stage,
+            self._data["id"],
+            self._data["created"],
+            self._data["verified_at"],
+            self._data["stage"],
             self.country,
             self.city,
             self.county,
             self.state,
-            self.continent,
-            self.tao_verified,
+            self._data["continent"],
+            self._data["tao_verified"],
             self.expected_attendees,
-            self.verified,
-            self.deleted,
+            self._data["verified"],
+            self._data["deleted"],
             self.inactive,
-            self.inactive_at,
+            self._data["inactive_at"],
             self.is_eb,
-            self.dojo_lead_id,
+            self._data["dojo_lead_id"],
         )
 
     @staticmethod
@@ -153,7 +139,7 @@ class Dojo(Migration):
             inactive_at,
             is_eb,
             lead_id)
-        VALUES ( % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s, % s)"""
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
     @staticmethod
     def select_sql() -> str:

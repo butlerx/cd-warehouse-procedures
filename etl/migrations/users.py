@@ -12,14 +12,6 @@ def user(_) -> Type[Runner]:
     class User(Migration):
         """user object"""
 
-        def __init__(self, row: Dict) -> None:
-            self._data = row
-            self.user_id: str = row["user_id"]
-            self.dob: str = row["dob"]
-            self.user_type: str = row["user_type"]
-            self.mailing_list: str = row["mailing_list"]
-            self.when: str = row["when"]
-
         @property
         def country(self) -> str:
             """users country"""
@@ -47,15 +39,15 @@ def user(_) -> Type[Runner]:
         def to_tuple(self) -> Tuple:
             """Transform to Tuple"""
             return (
-                self.user_id,
-                self.dob,
+                self._data["user_id"],
+                self._data["dob"],
                 self.country,
                 self.city,
                 self.gender,
-                self.user_type,
+                self._data["user_type"],
                 self.role,
-                self.mailing_list,
-                self.when,
+                self._data["mailing_list"],
+                self._data["when"],
             )
 
         @staticmethod

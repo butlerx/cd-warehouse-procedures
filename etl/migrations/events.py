@@ -13,17 +13,6 @@ def event(_) -> Type[Runner]:
     class Event(Migration):
         """event object"""
 
-        def __init__(self, row: Dict) -> None:
-            self._data = row
-            self.id: str = row["id"]
-            self.recurring_type: str = row["recurring_type"]
-            self.created_at: str = row["created_at"]
-            self.type: str = row["type"]
-            self.dojo_id: str = row["dojo_id"]
-            self.public: str = row["public"]
-            self.status: str = row["status"]
-            self.start_time: str = row["start_time"]
-
         @property
         def country(self) -> str:
             """country of event"""
@@ -42,17 +31,17 @@ def event(_) -> Type[Runner]:
         def to_tuple(self) -> Tuple:
             """convert event to tuple"""
             return (
-                self.id,
-                self.recurring_type,
+                self._data["id"],
+                self._data["recurring_type"],
                 self.country,
                 self.city,
-                self.created_at,
-                self.type,
-                self.dojo_id,
-                self.public,
-                self.status,
+                self._data["created_at"],
+                self._data["type"],
+                self._data["dojo_id"],
+                self._data["public"],
+                self._data["status"],
                 self.is_eb,
-                self.start_time,
+                self._data["start_time"],
             )
 
         @staticmethod

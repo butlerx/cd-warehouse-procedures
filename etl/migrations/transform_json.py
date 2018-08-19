@@ -3,13 +3,13 @@
 
 def get_city(city: dict) -> str:
     """get city name from different json versions"""
-    city_exist = (city is not None) and city
+    toponym_name = _get_toponym(city)
     return (
-        city["toponymName"]
-        if city_exist and ("toponymName" in city)
+        toponym_name
+        if toponym_name != "Unknown"
         else city["nameWithHierarchy"]
-        if (city_exist) and ("nameWithHierarchy" in city)
-        else "Unknown"
+        if (city is not None) and ("nameWithHierarchy" in city)
+        else toponym_name
     )
 
 

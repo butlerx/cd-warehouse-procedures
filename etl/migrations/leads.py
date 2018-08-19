@@ -10,9 +10,10 @@ def lead(_) -> Type[Runner]:
     class Lead(Migration):
         """Lead object"""
 
-        def __init__(self, row: Dict) -> None:
-            self._data = row
-            self.has_mentors: Optional[bool] = (
+        @property
+        def has_mentors(self) -> Optional[bool]:
+            """if lead has mentors"""
+            return (
                 True
                 if (self._data["has_mentors"] == "exists")
                 else False

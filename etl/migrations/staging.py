@@ -17,16 +17,10 @@ def staging(db_cursor: cursor) -> Type[Runner]:
         """class responsible for staging data"""
 
         def __init__(self, row: Dict) -> None:
-            self._data = row
+            super().__init__(row)
             self.cursor: cursor = db_cursor
             self.location_id = str(uuid4())
             self._insert()
-            self.id: str = row["id"]
-            self.user_id: str = row["user_id"]
-            self.dojo_id: str = row["dojo_id"]
-            self.event_id: str = row["event_id"]
-            self.session_id: str = row["session_id"]
-            self.ticket_id: str = row["ticket_id"]
 
         @property
         def attendance(self) -> bool:
@@ -45,15 +39,15 @@ def staging(db_cursor: cursor) -> Type[Runner]:
         def to_tuple(self) -> Tuple:
             """convert staged info to tuple"""
             return (
-                self.user_id,
-                self.dojo_id,
-                self.event_id,
-                self.session_id,
-                self.ticket_id,
+                self._data["user_id"],
+                self._data["dojo_id"],
+                self._data["event_id"],
+                self._data["session_id"],
+                self._data["ticket_id"],
                 self.attendance,
                 self.time,
                 self.location_id,
-                self.id,
+                self._data["id"],
             )
 
         @property

@@ -11,15 +11,14 @@ def ticket(_) -> Type[Runner]:
     class Ticket(Migration):
         """ticket object"""
 
-        def __init__(self, row: Dict) -> None:
-            self.ticket_id: str = row["ticket_id"]
-            self.type: str = row["type"]
-            self.quantity: str = row["quantity"]
-            self.deleted: str = row["deleted"]
-
         def to_tuple(self) -> Tuple:
             """reuturn tuple of ticket"""
-            return (self.ticket_id, self.type, self.quantity, self.deleted)
+            return (
+                self._data["ticket_id"],
+                self._data["type"],
+                self._data["quantity"],
+                self._data["deleted"],
+            )
 
         @staticmethod
         def insert_sql() -> str:
