@@ -4,7 +4,7 @@ from typing import Dict, Optional, Tuple, Type
 from uuid import uuid4
 
 from isodate import parse_datetime
-from warehouse import Migration, Runner
+from warehouse.migrate import Migration, Runner
 
 from .transform_json import get_city, get_country
 

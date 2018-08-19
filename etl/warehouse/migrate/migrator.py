@@ -6,47 +6,30 @@ from psycopg2.extras import DictCursor
 from warehouse.local_types import Connection, Databases
 
 
-class Migrator:
+async def migrate_db(
+    databases: Databases, con: Connection, tables: List[str], tasks: List[Tuple]
+) -> None:
     """converts orginal dbs to warehouse"""
+    dw_cursor = _connect_db(con, databases.warehouse)
+    dw_cursor.execute(open("./sql/dw.sql", "r").read())
+    cursors = {
+        "dw": dw_cursor,
+        "dojos": _connect_db(con, databases.dojos),
+        "events": _connect_db(con, databases.events),
+        "users": _connect_db(con, databases.users),
+    }
+    dw_cursor.execute(
+        ";".join(['TRUNCATE TABLE "{}" CASCADE'.format(table) for table in tables])
+    )
+    for database, task in tasks:
+        await task(cursors["dw"])(cursors[database], cursors["dw"]).run()
+    for _, curs in cursors.items():
+        curs.connection.close()
 
-    def __init__(self, databases: Databases, con: Connection) -> None:
-        self.dw_cursor = self._connect_db(con, databases.warehouse)
-        self.dw_cursor.execute(open("./sql/dw.sql", "r").read())
-        self.cursors = {
-            "dw": self.dw_cursor,
-            "dojos": self._connect_db(con, databases.dojos),
-            "events": self._connect_db(con, databases.events),
-            "users": self._connect_db(con, databases.users),
-        }
 
-    @staticmethod
-    def _connect_db(con: Connection, database: str):
-        connection = connect(
-            dbname=database, host=con.host, user=con.user, password=con.password
-        )
-        connection.set_session(autocommit=True)
-        return connection.cursor(cursor_factory=DictCursor)
-
-    async def _disconnect(self) -> None:
-        """disconnect from db's"""
-        for _, curs in self.cursors.items():
-            curs.connection.close()
-
-    async def migrate_db(self, tables: List[str], tasks: List[Tuple]) -> None:
-        """perform db migrations"""
-        await self._truncate(tables)
-        await self._tasks(tasks)
-        await self._disconnect()
-
-    async def _truncate(self, tables: List[str]) -> None:
-        """ Truncate all tables before fresh insert from sources"""
-        self.dw_cursor.execute(
-            ";".join(['TRUNCATE TABLE "{}" CASCADE'.format(table) for table in tables])
-        )
-
-    async def _tasks(self, tasks: List[Tuple]) -> None:
-        """Runs Migration"""
-        for database, task in tasks:
-            await task(self.cursors["dw"])(
-                self.cursors[database], self.cursors["dw"]
-            ).run()
+def _connect_db(con: Connection, database: str):
+    connection = connect(
+        dbname=database, host=con.host, user=con.user, password=con.password
+    )
+    connection.set_session(autocommit=True)
+    return connection.cursor(cursor_factory=DictCursor)

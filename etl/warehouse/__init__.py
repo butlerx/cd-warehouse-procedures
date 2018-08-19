@@ -6,7 +6,7 @@ from typing import Dict
 from .backups import AWS, download_db
 from .clean_up import Cleaner
 from .local_types import Connection, Databases
-from .migrate import Migration, Migrator, Runner
+from .migrate import migrate_db
 
 
 async def warehouse(config: Dict, dev: bool = False, db_path: str = "./db") -> None:
@@ -36,9 +36,7 @@ async def warehouse(config: Dict, dev: bool = False, db_path: str = "./db") -> N
             download_db(con, aws, ("events", databases.events, db_path), dev),
             download_db(con, aws, ("users", databases.users, db_path), dev),
         )
-        await Migrator(databases, con).migrate_db(
-            config["tables"], config["migrations"]
-        )
+        await migrate_db(databases, con, config["tables"], config["migrations"])
         print("Databases Migrated")
         exit_code = 0
     except Exception as err:
