@@ -3,8 +3,6 @@ from asyncio import gather
 from sys import exit as _exit
 from typing import Dict
 
-from psycopg2 import Error
-
 from .backups import AWS, download_db
 from .clean_up import Cleaner
 from .local_types import Connection, Databases
@@ -43,11 +41,11 @@ async def warehouse(config: Dict, dev: bool = False, db_path: str = "./db") -> N
         )
         print("Databases Migrated")
         exit_code = 0
-    except Error as err:
+    except Exception as err:
         print(err)
         exit_code = 1
     finally:
-        cleaner.close(databases.dojos, databases.events, databases.users)
+        await cleaner.close(databases.dojos, databases.events, databases.users)
         print(
             "Removed {0}, {1} and {2}".format(
                 databases.dojos, databases.events, databases.users

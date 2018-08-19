@@ -1,6 +1,6 @@
 """ restore from backups"""
 
-from warehouse.localtypes import Connection
+from warehouse.local_types import Connection
 
 from .aws import AWS
 from .restore import restore_db

@@ -21,9 +21,12 @@ async def restore_db(con: Connection, database: tuple) -> None:
     pg_env["PATH"] = "/usr/sbin:/sbin:{}".format(pg_env["PATH"])
     pg_env["PGPASSWORD"] = con.password
     tar.wait()
-    cmd = "pg_restore -c --if-exists -w -h {0} -d {1} -U {2} {3}/backup_dump"
     postgres = Popen(
-        split(cmd.format(con.host, database[1], con.user, directory)),
+        split(
+            "pg_restore -c --if-exists -w -h {0} -d {1} -U {2} {3}/backup_dump".format(
+                con.host, database[1], con.user, directory
+            )
+        ),
         shell=False,
         stderr=STDOUT,
         env=pg_env,

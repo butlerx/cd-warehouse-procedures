@@ -4,13 +4,12 @@ from typing import Dict, Optional, Tuple, Type
 from uuid import uuid4
 
 from isodate import parse_datetime
-from psycopg2 import cursor
+from warehouse import Migration, Runner
 
-from .migration import Migration, Runner
 from .transform_json import get_city, get_country
 
 
-def staging(db_cursor: cursor) -> Type[Runner]:
+def staging(db_cursor) -> Type[Runner]:
     """return stage class"""
 
     class Stage(Migration):
@@ -18,7 +17,7 @@ def staging(db_cursor: cursor) -> Type[Runner]:
 
         def __init__(self, row: Dict) -> None:
             super().__init__(row)
-            self.cursor: cursor = db_cursor
+            self.cursor = db_cursor
             self.location_id = str(uuid4())
             self._insert()
 
@@ -62,13 +61,11 @@ def staging(db_cursor: cursor) -> Type[Runner]:
 
         def _insert(self) -> None:
             self.cursor.execute(
-                """
-                INSERT INTO "public"."dimLocation"(
+                """INSERT INTO "public"."dimLocation"(
                     country,
                     city,
                     location_id
-                ) VALUES (%s, %s, %s)
-            """,
+                ) VALUES (%s, %s, %s)""",
                 (self.country, self.city, self.location_id),
             )
 
@@ -80,8 +77,8 @@ def staging(db_cursor: cursor) -> Type[Runner]:
                     cd_applications.dojo_id, cd_applications.user_id,
                     cd_applications.attendance,
                     dates, country, city
-                FROM cd_applications
-                INNER JOIN cd_events ON cd_applications.event_id = cd_events.id"""
+            FROM cd_applications
+            INNER JOIN cd_events ON cd_applications.event_id = cd_events.id"""
 
         @staticmethod
         def insert_sql() -> str:

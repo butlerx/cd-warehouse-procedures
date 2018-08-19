@@ -1,15 +1,13 @@
 """base class"""
 from typing import Tuple, Type
 
-from psycopg2 import cursor
-
 from .migration import Migration
 
 
 class Runner:
     """migration runner"""
 
-    def __init__(self, select: cursor, insert: cursor) -> None:
+    def __init__(self, select, insert) -> None:
         self._select = select
         self._insert = insert
         self._task, self._msg = self.setup()

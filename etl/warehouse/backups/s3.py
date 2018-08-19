@@ -9,14 +9,17 @@ from .aws import AWS
 async def download(database: str, aws: AWS, path: str) -> None:
     """Download database from backup from s3"""
     try:
-        session = Session(
-            aws_access_key_id=aws.access_key, aws_secret_access_key=aws.secret_key
+        bucket = (
+            Session(
+                aws_access_key_id=aws.access_key, aws_secret_access_key=aws.secret_key
+            )
+            .resource("s3")
+            .Bucket(aws.bucket)
         )
-        aws_s3 = session.resource("s3")
-        bucket = aws_s3.Bucket(aws.bucket)
-        s3_backups = bucket.objects.filter(Prefix="zen{}".format(database))
         obj = sorted(
-            s3_backups, key=lambda s3_object: s3_object.last_modified, reverse=True
+            bucket.objects.filter(Prefix="zen{}".format(database)),
+            key=lambda s3_object: s3_object.last_modified,
+            reverse=True,
         )[0]
         print("Restoring from {}".format(obj.key))
         bucket.download_file(

@@ -1,7 +1,7 @@
 """reads and writes to database"""
 from typing import List, Tuple
 
-from psycopg2 import connect, cursor
+from psycopg2 import connect
 from psycopg2.extras import DictCursor
 from warehouse.local_types import Connection, Databases
 
@@ -20,14 +20,12 @@ class Migrator:
         }
 
     @staticmethod
-    def _connect_db(con: Connection, database: str) -> cursor:
-        return (
-            connect(
-                dbname=database, host=con.host, user=con.user, password=con.password
-            )
-            .set_session(autocommit=True)
-            .cursor(cursor_factory=DictCursor)
+    def _connect_db(con: Connection, database: str):
+        connection = connect(
+            dbname=database, host=con.host, user=con.user, password=con.password
         )
+        connection.set_session(autocommit=True)
+        return connection.cursor(cursor_factory=DictCursor)
 
     async def _disconnect(self) -> None:
         """disconnect from db's"""
@@ -48,5 +46,7 @@ class Migrator:
 
     async def _tasks(self, tasks: List[Tuple]) -> None:
         """Runs Migration"""
-        for db, task in tasks:
-            await task(self.cursors["dw"])(self.cursors[db], self.cursors["dw"]).run()
+        for database, task in tasks:
+            await task(self.cursors["dw"])(
+                self.cursors[database], self.cursors["dw"]
+            ).run()

@@ -11,13 +11,11 @@ class Cleaner:
     """class responsible for reseting all databases"""
 
     def __init__(self, con: Connection) -> None:
-        self.cursor = (
-            connect(
-                dbname="postgres", host=con.host, user=con.user, password=con.password
-            )
-            .set_session(autocommit=True)
-            .cursor(cursor_factory=DictCursor)
+        connection = connect(
+            dbname="postgres", host=con.host, user=con.user, password=con.password
         )
+        connection.set_session(autocommit=True)
+        self.cursor = connection.cursor(cursor_factory=DictCursor)
 
     async def reset_databases(self, databases: Databases) -> None:
         """reset all databases to empty"""
