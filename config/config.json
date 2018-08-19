@@ -14,5 +14,17 @@
     "bucket": "zen-pg-backup",
     "access": "",
     "secret": ""
-  }
+  },
+  "tables": [
+    "factUsers",
+    "dimDojos",
+    "dimDojoLeads",
+    "dimUsers",
+    "dimEvents",
+    "dimLocation",
+    "dimUsersDojos",
+    "dimTickets",
+    "staging",
+    "dimBadges"
+  ]
 }

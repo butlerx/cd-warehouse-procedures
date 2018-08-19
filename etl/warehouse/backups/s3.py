@@ -3,7 +3,7 @@
 from boto3 import Session
 from botocore import exceptions
 
-from .local_types import AWS
+from .aws import AWS
 
 
 async def download(database: str, aws: AWS, path: str) -> None:

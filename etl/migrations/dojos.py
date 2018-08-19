@@ -1,7 +1,8 @@
 """for functions realted too dojos"""
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Type
 
-from .migration import Migration
+from warehouse import Migration, Runner
+
 from .transform_json import get_city, get_country, get_county, get_state
 
 
@@ -38,6 +39,14 @@ class UserDojo(Migration):
                 unnest(user_types) as user_type
             FROM cd_usersdojos
             WHERE deleted = 0"""
+
+
+class UserDojoMigration(Runner):
+    """user dojo migration runner"""
+
+    @staticmethod
+    def setup() -> Tuple[Type[UserDojo], str]:
+        return UserDojo, "Linked all dojos and users"
 
 
 class Dojo(Migration):
@@ -156,3 +165,11 @@ class Dojo(Migration):
                 WHERE stage=4 GROUP BY dojo_id)
             as q ON q.dojo_id = cd_dojos.id
             WHERE verified = 1 and deleted = 0"""
+
+
+class DojoMigration(Runner):
+    """dojo migration runner"""
+
+    @staticmethod
+    def setup() -> Tuple[Type[Dojo], str]:
+        return Dojo, "Inserted all dojos"

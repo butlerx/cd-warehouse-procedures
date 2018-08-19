@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 from asyncio import get_event_loop
 from json import load
 
+from migrations import MIGRATIONS
 from warehouse import warehouse
 
 
@@ -32,8 +33,10 @@ def cli():
     )
     args = parser.parse_args()
     with open(args.config) as data:
+        config = load(data)
+        config["migrations"] = MIGRATIONS
         loop = get_event_loop()
-        loop.run_until_complete(warehouse(load(data), dev=args.dev, db_path=args.db))
+        loop.run_until_complete(warehouse(config, dev=args.dev, db_path=args.db))
         loop.close()
 
 

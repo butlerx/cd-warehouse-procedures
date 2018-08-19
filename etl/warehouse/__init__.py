@@ -5,11 +5,10 @@ from typing import Dict
 
 from psycopg2 import Error
 
+from .backups import AWS, download_db
 from .clean_up import Cleaner
-from .local_types import AWS, Connection, Databases
-from .migrate import Migrator
-from .restore import restore_db
-from .s3 import download
+from .local_types import Connection, Databases
+from .migrate import Migration, Migrator, Runner
 
 
 async def warehouse(config: Dict, dev: bool = False, db_path: str = "./db") -> None:
@@ -39,7 +38,9 @@ async def warehouse(config: Dict, dev: bool = False, db_path: str = "./db") -> N
             download_db(con, aws, ("events", databases.events, db_path), dev),
             download_db(con, aws, ("users", databases.users, db_path), dev),
         )
-        await Migrator(databases, con).migrate_db()
+        await Migrator(databases, con).migrate_db(
+            config["tables"], config["migrations"]
+        )
         print("Databases Migrated")
         exit_code = 0
     except Error as err:
@@ -53,13 +54,3 @@ async def warehouse(config: Dict, dev: bool = False, db_path: str = "./db") -> N
             )
         )
         _exit(exit_code)
-
-
-async def download_db(
-    con: Connection, aws: AWS, database: tuple, dev: bool = False
-) -> None:
-    """download if not in dev mode backups and restore from them"""
-    print("Restoring db", database[0])
-    if not dev:
-        await download(database[0], aws, database[2])
-    await restore_db(con, database)

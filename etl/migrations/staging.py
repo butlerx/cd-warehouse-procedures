@@ -6,11 +6,11 @@ from uuid import uuid4
 from isodate import parse_datetime
 from psycopg2 import cursor
 
-from .migration import Migration
+from .migration import Migration, Runner
 from .transform_json import get_city, get_country
 
 
-def staging(db_cursor: cursor) -> Type[Migration]:
+def staging(db_cursor: cursor) -> Type[Runner]:
     """return stage class"""
 
     class Stage(Migration):
@@ -104,4 +104,10 @@ def staging(db_cursor: cursor) -> Type[Migration]:
                 id
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
-    return Stage
+    class _StageMigration(Runner):
+        @staticmethod
+        def setup() -> Tuple[Type[Stage], str]:
+            """Migrate Staged data"""
+            return Stage, "Populated staging"
+
+    return _StageMigration

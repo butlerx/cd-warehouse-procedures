@@ -5,6 +5,9 @@ from typing import Tuple
 class Migration:
     """base migration class"""
 
+    def __init__(self, data: dict) -> None:
+        pass
+
     @staticmethod
     def insert_sql() -> str:
         """command to insert"""

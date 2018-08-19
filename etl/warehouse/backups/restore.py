@@ -3,7 +3,7 @@ from os import environ, makedirs, path
 from shlex import split
 from subprocess import DEVNULL, STDOUT, Popen
 
-from .local_types import Connection
+from warehouse.local_types import Connection
 
 
 async def restore_db(con: Connection, database: tuple) -> None:
