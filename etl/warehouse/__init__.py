@@ -1,10 +1,8 @@
 """warehouse main interface"""
-from asyncio import gather
 from sys import exit as _exit
 from typing import Dict
 
-from .backups import AWS, download_db
-from .clean_up import Cleaner
+from .data_warehouse import AWS, Store
 from .local_types import Connection, Databases
 from .migrate import migrate_db
 
@@ -22,20 +20,18 @@ async def warehouse(config: Dict, dev: bool = False, db_path: str = "./db") -> N
         events=config["databases"]["events"],
         users=config["databases"]["users"],
     )
-    aws = AWS(
-        bucket=config["s3"]["bucket"],
-        access_key=config["s3"]["access"],
-        secret_key=config["s3"]["secret"],
+    store = Store(
+        con,
+        AWS(
+            bucket=config["s3"]["bucket"],
+            access_key=config["s3"]["access"],
+            secret_key=config["s3"]["secret"],
+        ),
+        dev,
+        db_path,
     )
-    cleaner = Cleaner(con)
     try:
-        await cleaner.reset_databases(databases)
-        print("Databases Reset")
-        await gather(
-            download_db(con, aws, ("dojos", databases.dojos, db_path), dev),
-            download_db(con, aws, ("events", databases.events, db_path), dev),
-            download_db(con, aws, ("users", databases.users, db_path), dev),
-        )
+        await store.restore(databases)
         await migrate_db(databases, con, config["tables"], config["migrations"])
         print("Databases Migrated")
         exit_code = 0
@@ -43,7 +39,7 @@ async def warehouse(config: Dict, dev: bool = False, db_path: str = "./db") -> N
         print(err)
         exit_code = 1
     finally:
-        await cleaner.close(databases.dojos, databases.events, databases.users)
+        await store.close(databases.dojos, databases.events, databases.users)
         print(
             "Removed {0}, {1} and {2}".format(
                 databases.dojos, databases.events, databases.users
