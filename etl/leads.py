@@ -17,7 +17,7 @@ def transform_lead(row):  # Transform / Load for Lead Dimension
         bool(row['mentor_teachers']),
         bool(row['mentor_youth_u18']),
         row['mentor_other'],
-        True if ("coderdojo.com" in row['email'] or row['request_email'] == "true") else False,
+        True if ((row['email'] is not None and "coderdojo.com" in row['email']) or row['request_email'] == "true") else False,
         row['created_at'],
         row['updated_at'],
         row['completed_at']
