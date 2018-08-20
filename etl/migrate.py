@@ -184,6 +184,8 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             application->'team'->'src'->>'teachers' as "mentor_teachers",
             application->'team'->'src'->>'youth' as "mentor_youth_u18",
             application->'team'->'alternativeSrc' as "mentor_other",
+            application->'dojo'->'isValid' as "dojo_is_valid",
+            application->'dojo'->'requestEmail' as "request_email",
             created_at, updated_at, completed_at
             FROM cd_dojoleads ORDER BY completed_at desc
         ''')
@@ -206,10 +208,11 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 mentor_teachers,
                 mentor_youth_u18,
                 mentor_other,
+                requested_email,
                 created_at,
                 updated_at,
                 completed_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_lead, dojos_cursor.fetchall()))
         print('Inserted leads')
         sys.stdout.flush()
