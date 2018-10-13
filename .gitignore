@@ -4,3 +4,4 @@ env
 .vscode
 data/
 dumps
+.mypy_cache

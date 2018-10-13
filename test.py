@@ -5,8 +5,12 @@ import psycopg2.extras
 
 
 def makeConnection():
-    dojos_string = "host=localhost" + " dbname=cp-dojos-development" + \
-        " user=postgres" + " password="
+    dojos_string = (
+        "host=localhost"
+        + " dbname=cp-dojos-development"
+        + " user=postgres"
+        + " password="
+    )
     dojos_conn = psycopg2.connect(dojos_string)
     dojos_cursor = dojos_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     return dojos_cursor
@@ -14,15 +18,19 @@ def makeConnection():
 
 def readFromTable():
     cursor = makeConnection()
-    return cursor.execute('select * from cd_dojos limit 10')
+    return cursor.execute("select * from cd_dojos limit 10")
 
 
 def insertRow():
-    dojos_string = "host=localhost" + " dbname=cp-dojos-development" + \
-        " user=postgres" + " password="
+    dojos_string = (
+        "host=localhost"
+        + " dbname=cp-dojos-development"
+        + " user=postgres"
+        + " password="
+    )
     dojos_conn = psycopg2.connect(dojos_string)
     dojos_cursor = dojos_conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    sql = '''
+    sql = """
         INSERT INTO cd_dojos (
             id,
             stage,
@@ -30,7 +38,7 @@ def insertRow():
             verified,
             name
         ) values (\'test-test-1-1-1-test\', 4, 1, 0, \'test\')
-    '''
+    """
     dojos_cursor.execute(sql)
     return dojos_conn.commit
 
@@ -44,16 +52,16 @@ class EqualityTest(unittest.TestCase):
             "countryNumber": "372",
             "continent": "EU",
             "alpha2": "IE",
-            "alpha3": "IRL"
+            "alpha3": "IRL",
         }
-        country = json_data['countryName']
-        self.assertEqual('Ireland', country)
+        country = json_data["countryName"]
+        self.assertEqual("Ireland", country)
 
     # Testing fields which are None
     def testNone(self):
         data = None
-        test = data['test'] if (data is not None) else 'Unknown'
-        self.assertEqual('Unknown', test)
+        test = data["test"] if (data is not None) else "Unknown"
+        self.assertEqual("Unknown", test)
 
     # Test database connection
     def testConnection(self):
@@ -83,5 +91,5 @@ class EqualityTest(unittest.TestCase):
             )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
