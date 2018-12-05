@@ -61,8 +61,9 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 inactive,
                 inactive_at,
                 is_eb,
-                lead_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                lead_id,
+                url)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_dojo, dojos_cursor.fetchall()))
         print("Inserted all dojos")
         sys.stdout.flush()
