@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: warehouse-migration
+  namespace: warehouse
+spec:
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      name: warehouse-migration
+    spec:
+      imagePullSecrets:
+        - name: regsecret
+      containers:
+        - name: migration
+          image: coderdojo/cd-warehouse-procedures
+          volumeMounts:
+            - name: config-volume
+              mountPath: /usr/src/app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: warehouse-config
+      restartPolicy: OnFailure

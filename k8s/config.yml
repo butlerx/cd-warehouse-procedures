@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: warehouse-config
+  namespace: warehouse
+data:
+  config.json: |-
+    {
+      "databases": {
+        "dojos": "cp-dojos-development",
+        "users": "cp-users-development",
+        "events": "cp-events-development",
+        "dw": "cdDataWarehouse"
+      },
+      "postgres": {
+        "host": "db",
+        "user": "platform",
+        "password": "password"
+      },
+      "s3": {
+        "bucket": "zen-pg-backup",
+        "access": "",
+        "secret": ""
+      }
+    }

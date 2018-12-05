@@ -7,4 +7,5 @@ This image is built by Docker Hub
 
 ## Run in production
 It takes the latest image and run via a cron
-The other solution is to run a one-type job which configuration is available to the dev team
+Elsewhat, you can create a one-type job by running
+`kubectl --namespace xxx delete jobs/warehouse-migration && kubectl --namespace xxx create -f k8s/job.yml`
