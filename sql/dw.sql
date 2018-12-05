@@ -118,6 +118,14 @@ CREATE TABLE IF NOT EXISTS "dimUsers" (
     CONSTRAINT "dimUsers_pkey" PRIMARY KEY (user_id)
 );
 
+CREATE TABLE IF NOT EXISTS "dimLogins" (
+    login_id character varying(40) NOT NULL,
+    user_id character varying(40) NOT NULL,
+    active boolean, 
+    logged_in_at timestamp without time zone,
+    CONSTRAINT "dimLogins_pkey" PRIMARY KEY (login_id)
+);
+
 CREATE TABLE IF NOT EXISTS "factUsers" (
     dojo_id character varying(40),
     badge_id character varying(40),

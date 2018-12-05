@@ -10,6 +10,7 @@ from staging import stage
 from tickets import transform_ticket
 from leads import transform_lead 
 from users import transform_user
+from logins import transform_login
 
 
 async def setup_warehouse(dw_cursor):
@@ -126,6 +127,22 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_user, users_cursor.fetchall()))
         print("Inserted all users")
+        sys.stdout.flush()
+
+        # Queries - Logins 
+        users_cursor.execute('''
+            SELECT *
+            FROM sys_login 
+        ''')
+        dw_cursor.executemany('''
+            INSERT INTO "public"."dimLogins"(
+                login_id,
+                user_id,
+                active,
+                logged_in_at)
+            VALUES (%s, %s, %s, %s)
+        ''', map(transform_login, users_cursor.fetchall()))
+        print("Inserted all logins")
         sys.stdout.flush()
 
         # Queries - Tickets
