@@ -86,6 +86,7 @@ CREATE TABLE IF NOT EXISTS "dimEvents" (
     is_eb boolean,
     status character varying(40),
     start_time timestamp without time zone,
+    published_at timestamp without time zone,
     CONSTRAINT "dimEvents_pkey" PRIMARY KEY (id),
     CONSTRAINT "dimEvents_ukey" UNIQUE (event_id, start_time)
 );

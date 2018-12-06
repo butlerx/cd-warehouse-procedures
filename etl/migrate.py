@@ -100,9 +100,10 @@ def migrate_db(dw_cursor, users_cursor, dojos_cursor, events_cursor):
                 public,
                 status,
                 is_eb,
-                start_time
+                start_time,
+                published_at
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ''', map(transform_event, events_cursor.fetchall()))
         print("Inserted all events and locations")
         sys.stdout.flush()
