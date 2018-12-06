@@ -12,7 +12,7 @@ def transform_event(row):  # Transform / Load for Event Dimension
     is_eb = row['eventbrite_id'] is not None
     status = row['status']
     start_time = row['start_time']
-    published_at = row['published_at']
+    published_at = row['published_at'] if (row['published_at']) is not None
 
     # For fields which zen prod dbs are storing as json
     if country is not 'Unknown':
